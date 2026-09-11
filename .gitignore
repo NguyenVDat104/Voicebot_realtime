@@ -1,0 +1,38 @@
+# Environment variables & secrets
+.env
+*.env
+!.env.example
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Audio outputs & temporary recordings
+*.wav
+*.mp3
+temp/
+temp_audio/
+
+# Logs
+*.log

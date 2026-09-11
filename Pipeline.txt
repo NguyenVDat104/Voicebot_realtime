@@ -1,0 +1,57 @@
+# PROJECT CONTEXT: REAL-TIME VIETNAMESE VOICEBOT 
+
+## 1. Project Metadata
+- **Project Name:** Application of Vietnamese Speech Recognition and Synthesis Techniques in Building an Automated Conversational Voicebot System.
+- **Environment:** Local development, Python 3.12 (Windows/Ubuntu).
+- **Core Goal:** Build a full-duplex, real-time voice conversational agent. FastAPI acts as the Audio Gateway handling DSP (Digital Signal Processing), while an external n8n workflow acts as the Logic/LLM brain.
+
+## 2. Technology Stack
+- **Backend Framework:** FastAPI, Uvicorn, WebSockets.
+- **Voice Activity Detection (VAD):** `silero-vad` (torchaudio).
+- **Speech-to-Text (STT):** `faster-whisper` (Local inference, optimized for Vietnamese).
+- **Text-to-Speech (TTS):** `edge-tts` (Microsoft Azure Neural voices, streaming capability).
+- **Signal Processing:** `numpy`, `librosa` (Resampling to 16kHz, Mono).
+- **Integration:** `httpx` (for calling n8n webhook).
+- **Frontend:** HTML5, Vanilla JS (Web Audio API, WebSocket client).
+
+## 3. System Architecture & Data Flow
+The system operates over a single WebSocket connection between the Client and FastAPI.
+
+1. **[Client -> Server] Audio Streaming:** Client captures mic audio (PCM 16-bit), sends chunks via WebSocket to FastAPI.
+2. **[Server] Preprocessing & VAD:** FastAPI converts audio to 16kHz Mono. Silero VAD checks for voice activity. If a pause (silence > 500ms-800ms) is detected, the audio buffer is marked as complete.
+3. **[Server] STT:** The buffered audio is fed into `faster-whisper` (`language="vi"`, `beam_size=3`). Returns a text string.
+4. **[Server -> n8n] Logic:** FastAPI sends a POST request containing `{"session_id": "...", "text": "..."}` to the n8n Webhook.
+5. **[n8n -> Server] Response:** n8n processes the text via LLM/RAG and returns a plain text response to FastAPI.
+6. **[Server -> Client] TTS Streaming:** FastAPI feeds the n8n response text into `edge-tts` (Voice: `vi-VN-HoaiMyNeural`). The generated audio byte stream is sent back through the WebSocket to the Client.
+7. **[Client] Playback:** Client decodes and plays the audio chunks dynamically.
+
+## 4. Directory Structure (Proposed)
+```text
+voicebot_project/
+├── main.py                 # FastAPI application entry point
+├── audio_processing/       
+│   ├── vad.py              # Silero VAD initialization and logic
+│   ├── stt.py              # faster-whisper wrapper
+│   └── tts.py              # edge-tts streaming logic
+├── services/
+│   └── n8n_client.py       # HTTPX client to communicate with n8n
+├── static/
+│   └── index.html          # Frontend UI and Web Audio API logic
+├── requirements.txt
+└── AI_CONTEXT.md           # This file
+
+## 5. Strict Technical Constraints & Instructions for AI Coder
+When generating code for this project, you MUST adhere to the following rules:
+
+Async/Await & Blocking IO: faster-whisper inference and audio resampling are CPU-bound blocking operations. You MUST wrap them in asyncio.to_thread() or a ThreadPoolExecutor to prevent blocking the FastAPI event loop and stalling the WebSocket.
+
+Audio Format: VAD and STT strictly require 16kHz, Mono, FP32/INT16 audio arrays. Ensure the frontend sends compatible PCM data, or write robust conversion logic using numpy upon receiving WebSocket bytes.
+
+VAD Logic: Implement a sliding window or chunk-based buffer for the VAD. Do not send audio to Whisper until VAD confirms a complete utterance (voice followed by silence).
+
+TTS Streaming: Do not wait for edge-tts to finish generating the entire audio file. Use the edge_tts.Communicate.stream() method to yield chunks and send them immediately via WebSocket to minimize latency.
+
+Error Handling: Implement try-catch blocks around the n8n HTTP requests and STT inference. If n8n times out, gracefully synthesize an error message via TTS (e.g., "Hệ thống đang bận, vui lòng thử lại").
+
+## 6. Initial Task
+Please start by generating the main.py and the static/index.html files, setting up the basic WebSocket connection and audio chunk reception.
