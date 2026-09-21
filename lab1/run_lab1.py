@@ -202,19 +202,33 @@ print(f"  • Biên độ đỉnh (Peak)  : {peak_val:.4f} (Trạng thái: {'An 
 print(f"  • Năng lượng RMS       : {rms_val:.4f} ({rms_dbfs:.2f} dBFS)")
 print(f"  • Tổng năng lượng (E)  : {total_energy:.2f}")
 
-# So sánh 2 phân đoạn có đặc tính âm thanh khác nhau:
-# Đoạn 1: Đoạn hòa âm cao trào (1.0s -> 2.0s)
-# Đoạn 2: Đoạn khoảng lặng/nghỉ cuối tệp (8.5s -> 9.5s)
-seg1 = x[int(1.0 * Fs):int(2.0 * Fs)]
-seg2 = x[int(8.5 * Fs):int(9.5 * Fs)]
+# Tự động tìm đoạn có năng lượng cao nhất (active audio) và đoạn tĩnh/lặng nhất (silence/quiet)
+win_len = int(1.0 * Fs)
+num_wins = int(len(x) // win_len)
+if num_wins >= 2:
+    win_energies = [np.mean(x[i*win_len:(i+1)*win_len]**2) for i in range(num_wins)]
+    best_act_idx = int(np.argmax(win_energies))
+    best_sil_idx = int(np.argmin(win_energies))
+    if best_sil_idx == best_act_idx:
+        best_sil_idx = (best_act_idx + 1) % num_wins
+    t_start_act = float(best_act_idx)
+    t_start_sil = float(best_sil_idx)
+else:
+    t_start_act, t_start_sil = 0.0, min(0.5, duration/2)
+
+seg1 = x[int(t_start_act * Fs):int((t_start_act + 1.0) * Fs)]
+seg2 = x[int(t_start_sil * Fs):int((t_start_sil + 1.0) * Fs)]
 
 peak_seg1, rms_seg1 = np.max(np.abs(seg1)), np.sqrt(np.mean(seg1**2))
 peak_seg2, rms_seg2 = np.max(np.abs(seg2)), np.sqrt(np.mean(seg2**2))
+rms_seg1_db = 20 * np.log10(rms_seg1 + 1e-12)
+rms_seg2_db = 20 * np.log10(rms_seg2 + 1e-12)
+ratio_rms = rms_seg1 / (rms_seg2 + 1e-12)
 
 print(f"\n  [So sánh 2 phân đoạn đặc trưng]:")
-print(f"    - Đoạn 1 (Hòa âm cao trào 1.0s-2.0s): Peak = {peak_seg1:.4f}, RMS = {rms_seg1:.4f} ({20*np.log10(rms_seg1):.2f} dBFS)")
-print(f"    - Đoạn 2 (Khoảng lặng tĩnh 8.5s-9.5s): Peak = {peak_seg2:.4f}, RMS = {rms_seg2:.4f} ({20*np.log10(rms_seg2):.2f} dBFS)")
-print(f"    -> Nhận xét: Đoạn 1 có năng lượng RMS gấp ~{rms_seg1/rms_seg2:.1f} lần Đoạn 2, biên độ dao động mạnh mẽ,")
+print(f"    - Đoạn 1 (Năng lượng cao {t_start_act:.1f}s-{t_start_act+1.0:.1f}s): Peak = {peak_seg1:.4f}, RMS = {rms_seg1:.4f} ({rms_seg1_db:.2f} dBFS)")
+print(f"    - Đoạn 2 (Khoảng lặng tĩnh {t_start_sil:.1f}s-{t_start_sil+1.0:.1f}s): Peak = {peak_seg2:.4f}, RMS = {rms_seg2:.4f} ({rms_seg2_db:.2f} dBFS)")
+print(f"    -> Nhận xét: Đoạn 1 có năng lượng RMS gấp ~{ratio_rms:.1f} lần Đoạn 2, biên độ dao động mạnh mẽ,")
 print(f"       trong khi Đoạn 2 chỉ chứa nhiễu nền vi mô, không có hoạt động âm sắc nổi bật.")
 
 # Vẽ đồ thị Waveform tổng hợp
@@ -223,19 +237,19 @@ fig, axes = plt.subplots(3, 1, figsize=(12, 8))
 
 # Đồ thị 1: Toàn bộ tín hiệu
 axes[0].plot(time_axis, x, color='#1f77b4', lw=0.6)
-axes[0].axvspan(1.0, 2.0, color='orange', alpha=0.25, label='Đoạn 1: Hòa âm năng lượng cao')
-axes[0].axvspan(8.5, 9.5, color='green', alpha=0.25, label='Đoạn 2: Khoảng lặng tĩnh')
+axes[0].axvspan(t_start_act, t_start_act + 1.0, color='orange', alpha=0.25, label=f'Đoạn 1: Năng lượng cao ({t_start_act:.0f}s-{t_start_act+1:.0f}s)')
+axes[0].axvspan(t_start_sil, t_start_sil + 1.0, color='green', alpha=0.25, label=f'Đoạn 2: Khoảng lặng ({t_start_sil:.0f}s-{t_start_sil+1:.0f}s)')
 axes[0].set_title(f"Waveform toàn bộ tệp âm thanh (Fs = {Fs} Hz, Duration = {duration:.2f}s, Peak = {peak_val:.3f})", fontsize=11, fontweight='bold')
 axes[0].set_xlabel("Thời gian (giây)")
 axes[0].set_ylabel("Biên độ chuẩn hóa")
 axes[0].set_ylim(-1.05, 1.05)
 axes[0].legend(loc='upper right')
 
-# Đồ thị 2: Zoom vào đoạn 0.5s đặc trưng (từ 1.0s đến 1.5s)
-zoom_t = np.linspace(1.0, 1.5, int(0.5 * Fs))
-zoom_sig = x[int(1.0 * Fs):int(1.5 * Fs)]
+# Đồ thị 2: Zoom vào đoạn 0.5s đặc trưng
+zoom_t = np.linspace(t_start_act, t_start_act + 0.5, int(0.5 * Fs))
+zoom_sig = x[int(t_start_act * Fs):int((t_start_act + 0.5) * Fs)]
 axes[1].plot(zoom_t, zoom_sig, color='#d62728', lw=1.0)
-axes[1].set_title("Phân đoạn phóng to 0.5 giây (1.0s - 1.5s) thể hiện cấu trúc dao động chu kỳ của hòa âm", fontsize=11, fontweight='bold')
+axes[1].set_title(f"Phân đoạn phóng to 0.5 giây ({t_start_act:.1f}s - {t_start_act+0.5:.1f}s) thể hiện cấu trúc dao động chu kỳ", fontsize=11, fontweight='bold')
 axes[1].set_xlabel("Thời gian (giây)")
 axes[1].set_ylabel("Biên độ")
 axes[1].set_ylim(-1.05, 1.05)
@@ -286,8 +300,8 @@ Giải thích nguyên lý Khối C:
      bị giới hạn bởi chiều dài thời gian hữu hạn của cửa sổ phân tích (delta_f_true ~ 1 / T_window).
 """
 
-# Chọn đoạn tín hiệu ổn định 1.0s (từ 1.0s đến 2.0s)
-fft_seg = x[int(1.0 * Fs):int(2.0 * Fs)]
+# Chọn đoạn tín hiệu ổn định 1.0s (dùng chính đoạn có năng lượng cao nhất t_start_act)
+fft_seg = x[int(t_start_act * Fs):int((t_start_act + 1.0) * Fs)]
 N_seg = len(fft_seg)
 window_hamming = np.hamming(N_seg)
 x_windowed = fft_seg * window_hamming
@@ -305,8 +319,12 @@ delta_f_large = Fs / NFFT_large
 
 # 2. Tìm ít nhất 3 đỉnh phổ nổi bật (Peak detection) trong dải tần [100 Hz, 4000 Hz]
 search_idx = np.where((freqs_large >= 100) & (freqs_large <= 4000))[0]
-peaks_indices, properties = signal.find_peaks(mag_db[search_idx], height=-25, distance=int(50/delta_f_large))
+max_mag = np.max(mag_db[search_idx])
+peaks_indices, properties = signal.find_peaks(mag_db[search_idx], height=max_mag - 30, distance=max(1, int(30/delta_f_large)))
 actual_peak_indices = search_idx[peaks_indices]
+if len(actual_peak_indices) < 3:
+    peaks_indices, properties = signal.find_peaks(mag_db[search_idx], distance=max(1, int(15/delta_f_large)))
+    actual_peak_indices = search_idx[peaks_indices]
 
 # Sắp xếp các đỉnh theo biên độ giảm dần và lấy top 5 đỉnh
 top_indices = actual_peak_indices[np.argsort(mag_db[actual_peak_indices])[::-1][:5]]
@@ -480,7 +498,7 @@ Giải thích nguyên lý Khối E:
 2. Để so sánh công bằng: Phải giữ nguyên cùng một đoạn dữ liệu mẫu và cùng số điểm NFFT.
 """
 
-frame_test = x[int(1.2 * Fs):int(1.2 * Fs + L_standard)]
+frame_test = x[int((t_start_act + 0.2) * Fs):int((t_start_act + 0.2) * Fs + L_standard)]
 N_win = len(frame_test)
 
 w_rect = np.ones(N_win)
@@ -600,8 +618,8 @@ print(f"  -> Đã xuất 3 file âm thanh sau lọc vào: {AUDIO_DIR}")
 
 # Vẽ đồ thị so sánh phổ trước và sau khi lọc Low-pass trên cùng một đoạn
 N_test_filt = int(1.0 * Fs)
-seg_orig = x[int(1.0 * Fs):int(2.0 * Fs)] * np.hamming(N_test_filt)
-seg_filtered = y_lpf[int(1.0 * Fs):int(2.0 * Fs)] * np.hamming(N_test_filt)
+seg_orig = x[int(t_start_act * Fs):int((t_start_act + 1.0) * Fs)] * np.hamming(N_test_filt)
+seg_filtered = y_lpf[int(t_start_act * Fs):int((t_start_act + 1.0) * Fs)] * np.hamming(N_test_filt)
 
 X_orig = np.fft.rfft(seg_orig, n=16384)
 X_filt = np.fft.rfft(seg_filtered, n=16384)
