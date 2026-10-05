@@ -1,0 +1,11 @@
+file_name,true_label,pred_label,top1_label,top1_score,top2_label,top2_score,top3_label,top3_score,correct
+khong_04.wav,khong,khong,khong,8.8646,hai,34.9696,bon,37.749,1
+khong_05.wav,khong,khong,khong,10.2214,hai,34.8018,bon,37.608,1
+mot_04.wav,mot,mot,mot,9.9835,bon,33.5313,hai,35.2935,1
+mot_05.wav,mot,mot,mot,9.2243,bon,30.5316,hai,36.2013,1
+hai_04.wav,hai,hai,hai,7.3074,mot,34.2721,bon,38.1069,1
+hai_05.wav,hai,hai,hai,10.9575,khong,31.4202,mot,34.4234,1
+ba_04.wav,ba,ba,ba,13.3004,bon,32.4902,mot,35.9039,1
+ba_05.wav,ba,ba,ba,9.7498,bon,34.9868,mot,37.8389,1
+bon_04.wav,bon,bon,bon,10.0594,mot,31.044,ba,34.8889,1
+bon_05.wav,bon,bon,bon,10.1866,mot,30.3968,ba,36.2528,1
