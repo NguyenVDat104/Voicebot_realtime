@@ -1,0 +1,23 @@
+Experiment,Variable,Accuracy,Detail
+E1_Number_of_States,n_states=3,1.0000,Train_Time=0.34s
+E1_Number_of_States,n_states=5,1.0000,Train_Time=0.37s
+E1_Number_of_States,n_states=7,1.0000,Train_Time=0.30s
+E2_Dynamic_Features,13_Static_MFCC,1.0000,Dim=13
+E2_Dynamic_Features,39_Dynamic_MFCC,1.0000,Dim=39
+E3_Covariance_Type,Diagonal,1.0000,Params=39/state
+E3_Covariance_Type,Full,1.0000,Params=780/state
+E4_Sample_Size,K=1_DTW,1.0000,K=1
+E4_Sample_Size,K=1_HMM,1.0000,K=1
+E4_Sample_Size,K=2_DTW,1.0000,K=2
+E4_Sample_Size,K=2_HMM,1.0000,K=2
+E4_Sample_Size,K=3_DTW,1.0000,K=3
+E4_Sample_Size,K=3_HMM,1.0000,K=3
+E4_Sample_Size,K=6_DTW,1.0000,K=6
+E4_Sample_Size,K=6_HMM,1.0000,K=6
+E5_Robustness,Clean_Test,1.0000,Matched
+E5_Robustness,Cross_Speaker2,1.0000,Female Voice
+E5_Robustness,Noise_SNR15dB,0.4000,White Noise
+E6_LM_Weight,lambda=0.0,1.0000,Winner=mo
+E6_LM_Weight,lambda=0.1,1.0000,Winner=mo
+E6_LM_Weight,lambda=0.3,1.0000,Winner=mo
+E6_LM_Weight,lambda=1.0,1.0000,Winner=mo

@@ -1,0 +1,7 @@
+# BẢNG TỪ ĐIỂN PHÁT ÂM (PRONUNCIATION LEXICON) - LAB 3
+# Định dạng chuẩn: WORD PHONE_1 PHONE_2 ... PHONE_K
+mo M O
+dong D OW NG
+len L EH N
+xuong S UONG
+dung D U NG
