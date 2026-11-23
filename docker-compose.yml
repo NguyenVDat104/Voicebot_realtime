@@ -18,5 +18,7 @@ services:
       - "${USERPROFILE}/.cache/huggingface:/root/.cache/huggingface"
       - "./static:/app/static"
       - "./main.py:/app/main.py"
+      - "./services:/app/services"
+      - "./audio_processing:/app/audio_processing"
     extra_hosts:
       - "host.docker.internal:host-gateway"

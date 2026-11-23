@@ -87,11 +87,7 @@ class VoicebotClient {
   }
 
   getAssistantName() {
-    const voice = this.ttsVoiceSelect ? this.ttsVoiceSelect.value : (localStorage.getItem("voicebot_tts_voice") || "vi-VN-HoaiMyNeural");
-    if (voice === "vi-VN-NamMinhNeural") {
-      return "Nguyễn Đạt";
-    }
-    return "Ngọc Trinh";
+    return "Trợ lý AI";
   }
 
   initSettings() {

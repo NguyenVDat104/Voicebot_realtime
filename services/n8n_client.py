@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Optional
 import httpx
@@ -33,7 +34,10 @@ class N8NClient:
         target_url = custom_url or self.webhook_url
         payload = {
             "session_id": session_id,
+            "sessionId": session_id,
             "text": text,
+            "chatInput": text,
+            "message": text,
         }
 
         logger.info(f"Sending request to n8n webhook ({target_url}) for session '{session_id}': '{text}'")
@@ -47,9 +51,36 @@ class N8NClient:
                 )
 
             if response.status_code == 200:
-                # Try parsing as JSON first
+                raw_text = response.text.strip()
+                if not raw_text:
+                    return "Tôi đã ghi nhận thông tin của bạn."
+
+                # 1. Support n8n AI Agent / Chat Trigger streaming NDJSON events
+                if '{"type":' in raw_text:
+                    ndjson_chunks = []
+                    for line in raw_text.splitlines():
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            item_obj = json.loads(line)
+                            if isinstance(item_obj, dict):
+                                if item_obj.get("type") == "item" and "content" in item_obj:
+                                    ndjson_chunks.append(item_obj["content"])
+                                elif "output" in item_obj:
+                                    ndjson_chunks.append(str(item_obj["output"]))
+                                elif "text" in item_obj:
+                                    ndjson_chunks.append(str(item_obj["text"]))
+                        except Exception:
+                            pass
+                    if ndjson_chunks:
+                        assembled = "".join(ndjson_chunks).strip()
+                        if assembled:
+                            return assembled
+
+                # 2. Try parsing as standard single JSON
                 try:
-                    data = response.json()
+                    data = json.loads(raw_text)
                     # Support n8n "All Incoming Items" list response: [{"output": "..."}]
                     if isinstance(data, list):
                         if len(data) > 0:
@@ -74,8 +105,7 @@ class N8NClient:
                     elif isinstance(data, str):
                         return data.strip()
                 except Exception:
-                    # Not JSON, return raw text
-                    raw_text = response.text.strip()
+                    # Not standard JSON, return raw text
                     if raw_text:
                         return raw_text
 
