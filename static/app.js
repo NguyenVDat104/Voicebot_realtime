@@ -266,44 +266,32 @@ class VoicebotClient {
       });
     });
 
-    // Settings Modal open/close/save
-    this.toggleSettingsBtn.addEventListener("click", () => {
-      this.settingsModal.classList.remove("hidden");
-    });
-    this.closeSettingsBtn.addEventListener("click", () => {
-      this.settingsModal.classList.add("hidden");
-    });
-    this.settingsModal.addEventListener("click", (e) => {
-      if (e.target === this.settingsModal) {
-        this.settingsModal.classList.add("hidden");
-      }
-    });
-
-    this.saveSettingsBtn.addEventListener("click", () => {
-      this.wsUrl = this.wsUrlInput.value.trim();
-      localStorage.setItem("voicebot_ws_url", this.wsUrl);
-      const silenceVal = this.vadSensitivityInput ? parseInt(this.vadSensitivityInput.value) : 600;
-      const thresholdVal = this.vadThresholdInput ? parseFloat(this.vadThresholdInput.value) : 0.45;
-      const voiceVal = this.ttsVoiceSelect ? this.ttsVoiceSelect.value : "vi-VN-HoaiMyNeural";
-      const rateVal = this.ttsRateSelect ? this.ttsRateSelect.value : "+15%";
-
-      localStorage.setItem("voicebot_vad_silence", silenceVal);
-      localStorage.setItem("voicebot_vad_threshold", thresholdVal);
-      localStorage.setItem("voicebot_tts_voice", voiceVal);
-      localStorage.setItem("voicebot_tts_rate", rateVal);
-
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        if (this.sessionIdInput.value.trim()) {
-          this.ws.send(JSON.stringify({
-            type: "set_session",
-            session_id: this.sessionIdInput.value.trim()
-          }));
+    // Settings actions (Modal or Dedicated Tab)
+    if (this.toggleSettingsBtn) {
+      this.toggleSettingsBtn.addEventListener("click", () => {
+        if (this.settingsModal) this.settingsModal.classList.remove("hidden");
+      });
+    }
+    if (this.closeSettingsBtn) {
+      this.closeSettingsBtn.addEventListener("click", () => {
+        if (this.settingsModal) this.settingsModal.classList.add("hidden");
+      });
+    }
+    if (this.settingsModal) {
+      this.settingsModal.addEventListener("click", (e) => {
+        if (e.target === this.settingsModal) {
+          this.settingsModal.classList.add("hidden");
         }
-        this.sendSettingsToServer();
-      }
-      this.settingsModal.classList.add("hidden");
-      this.showToast("Đã lưu và áp dụng thiết lập thành công!", "success");
-    });
+      });
+    }
+
+    if (this.saveSettingsBtn) {
+      this.saveSettingsBtn.addEventListener("click", () => this.saveSettings());
+    }
+    const saveMainBtn = document.getElementById("saveMainSettingsBtn");
+    if (saveMainBtn) {
+      saveMainBtn.addEventListener("click", () => this.saveSettings());
+    }
 
     // Keyboard Shortcuts:
     // Esc: Interrupt bot speech
@@ -1393,6 +1381,36 @@ class VoicebotClient {
     `).join("");
   }
 
+  saveSettings() {
+    if (this.wsUrlInput) {
+      this.wsUrl = this.wsUrlInput.value.trim();
+      localStorage.setItem("voicebot_ws_url", this.wsUrl);
+    }
+    const silenceVal = this.vadSensitivityInput ? parseInt(this.vadSensitivityInput.value) : 600;
+    const thresholdVal = this.vadThresholdInput ? parseFloat(this.vadThresholdInput.value) : 0.45;
+    const voiceVal = this.ttsVoiceSelect ? this.ttsVoiceSelect.value : "vi-VN-HoaiMyNeural";
+    const rateVal = this.ttsRateSelect ? this.ttsRateSelect.value : "+15%";
+
+    localStorage.setItem("voicebot_vad_silence", silenceVal);
+    localStorage.setItem("voicebot_vad_threshold", thresholdVal);
+    localStorage.setItem("voicebot_tts_voice", voiceVal);
+    localStorage.setItem("voicebot_tts_rate", rateVal);
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (this.sessionIdInput && this.sessionIdInput.value.trim()) {
+        this.ws.send(JSON.stringify({
+          type: "set_session",
+          session_id: this.sessionIdInput.value.trim()
+        }));
+      }
+      this.sendSettingsToServer();
+    }
+    if (this.settingsModal) {
+      this.settingsModal.classList.add("hidden");
+    }
+    this.showToast("Đã lưu và áp dụng thiết lập thành công!", "success");
+  }
+
   jumpToChat(id) {
     const voicebotNavBtn = document.querySelector('.sidebar-nav .nav-item[data-tab="voicebot"]');
     if (voicebotNavBtn) {
@@ -1420,18 +1438,6 @@ class VoicebotClient {
     const clearAllBtn = document.getElementById("historyClearAllBtn");
     if (clearAllBtn) {
       clearAllBtn.addEventListener("click", () => this.clearChat());
-    }
-
-    // Save main settings button
-    const saveMainBtn = document.getElementById("saveMainSettingsBtn");
-    if (saveMainBtn) {
-      saveMainBtn.addEventListener("click", () => {
-        if (this.saveSettingsBtn) {
-          this.saveSettingsBtn.click();
-        } else {
-          this.showToast("Đã lưu thiết lập thành công!", "success");
-        }
-      });
     }
 
     // Reset analytics
