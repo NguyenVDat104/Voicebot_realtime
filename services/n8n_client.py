@@ -21,15 +21,15 @@ class N8NClient:
         self.webhook_url = webhook_url
         self.timeout = timeout
 
-    async def send_message(
+    async def stream_message(
         self,
         session_id: str,
         text: str,
         custom_url: Optional[str] = None,
-    ) -> str:
+    ):
         """
-        Sends a POST request with {"session_id": "...", "text": "..."} to the n8n webhook.
-        Returns the text response from n8n or an error fallback message.
+        Streams response chunks from n8n webhook (supporting NDJSON and SSE events).
+        Yields text chunks as they arrive from the server in real-time.
         """
         target_url = custom_url or self.webhook_url
         payload = {
@@ -40,92 +40,89 @@ class N8NClient:
             "message": text,
         }
 
-        logger.info(f"Sending request to n8n webhook ({target_url}) for session '{session_id}': '{text}'")
+        logger.info(f"Streaming request to n8n webhook ({target_url}) for session '{session_id}': '{text}'")
+        timeout = httpx.Timeout(self.timeout, connect=10.0)
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                async with client.stream(
+                    "POST",
                     target_url,
                     json=payload,
                     headers={"Content-Type": "application/json"},
-                )
+                ) as response:
+                    if response.status_code != 200:
+                        logger.error(f"n8n stream error status {response.status_code}")
+                        yield DEFAULT_ERROR_MESSAGE
+                        return
 
-            if response.status_code == 200:
-                raw_text = response.text.strip()
-                if not raw_text:
-                    return "Tôi đã ghi nhận thông tin của bạn."
+                    buffer = ""
+                    yielded_any = False
 
-                # 1. Support n8n AI Agent / Chat Trigger streaming NDJSON events
-                if '{"type":' in raw_text:
-                    ndjson_chunks = []
-                    for line in raw_text.splitlines():
-                        line = line.strip()
-                        if not line:
-                            continue
+                    async for chunk in response.aiter_text():
+                        buffer += chunk
+                        while "\n" in buffer:
+                            line, buffer = buffer.split("\n", 1)
+                            line = line.strip()
+                            if not line:
+                                continue
+                            try:
+                                data = json.loads(line)
+                                if isinstance(data, dict):
+                                    if data.get("type") == "item" and "content" in data:
+                                        content = data["content"]
+                                        if content:
+                                            yielded_any = True
+                                            yield content
+                                    elif "output" in data:
+                                        yielded_any = True
+                                        yield str(data["output"])
+                                    elif "text" in data:
+                                        yielded_any = True
+                                        yield str(data["text"])
+                            except Exception:
+                                pass
+
+                    # If not NDJSON or single JSON response
+                    if buffer.strip() and not yielded_any:
                         try:
-                            item_obj = json.loads(line)
-                            if isinstance(item_obj, dict):
-                                if item_obj.get("type") == "item" and "content" in item_obj:
-                                    ndjson_chunks.append(item_obj["content"])
-                                elif "output" in item_obj:
-                                    ndjson_chunks.append(str(item_obj["output"]))
-                                elif "text" in item_obj:
-                                    ndjson_chunks.append(str(item_obj["text"]))
+                            data = json.loads(buffer.strip())
+                            if isinstance(data, dict):
+                                for key in ["text", "output", "response", "message", "answer"]:
+                                    if key in data and isinstance(data[key], str):
+                                        yield data[key].strip()
+                                        return
+                            elif isinstance(data, list) and len(data) > 0:
+                                item = data[0]
+                                if isinstance(item, dict):
+                                    for key in ["text", "output", "response", "message", "answer"]:
+                                        if key in item and isinstance(item[key], str):
+                                            yield item[key].strip()
+                                            return
                         except Exception:
                             pass
-                    if ndjson_chunks:
-                        assembled = "".join(ndjson_chunks).strip()
-                        if assembled:
-                            return assembled
-
-                # 2. Try parsing as standard single JSON
-                try:
-                    data = json.loads(raw_text)
-                    # Support n8n "All Incoming Items" list response: [{"output": "..."}]
-                    if isinstance(data, list):
-                        if len(data) > 0:
-                            item = data[0]
-                            if isinstance(item, dict):
-                                data = item
-                            elif isinstance(item, str):
-                                return item.strip()
-                        else:
-                            return "Tôi đã ghi nhận thông tin của bạn."
-
-                    if isinstance(data, dict):
-                        # Support common n8n return keys: text, output, response, message, answer
-                        for key in ["text", "output", "response", "message", "answer"]:
-                            if key in data and isinstance(data[key], str):
-                                return data[key].strip()
-                        # Fallback to any non-empty string value in the dict
-                        for val in data.values():
-                            if isinstance(val, str) and val.strip():
-                                return val.strip()
-                        return str(data)
-                    elif isinstance(data, str):
-                        return data.strip()
-                except Exception:
-                    # Not standard JSON, return raw text
-                    if raw_text:
-                        return raw_text
-
-                return "Tôi đã ghi nhận thông tin của bạn."
-            else:
-                logger.error(
-                    f"n8n webhook returned error status {response.status_code}: {response.text[:200]}"
-                )
-                return DEFAULT_ERROR_MESSAGE
+                        yield buffer.strip()
 
         except httpx.TimeoutException:
-            logger.warning(f"Timeout ({self.timeout}s) waiting for n8n webhook response.")
-            return "Xin lỗi bạn, thời gian phản hồi quá lâu. Bạn vui lòng thử lại nhé."
-
+            logger.warning(f"Timeout ({self.timeout}s) waiting for n8n streaming response.")
+            yield "Xin lỗi bạn, thời gian phản hồi quá lâu. Bạn vui lòng thử lại nhé."
         except httpx.ConnectError:
-            logger.warning(
-                f"Could not connect to n8n webhook at {target_url}. (Is n8n running?). Providing contextual fallback."
-            )
-            return f"Tôi đã nghe thấy: \"{text}\". Hiện tại n8n chưa được kết nối, vui lòng kiểm tra webhook."
-
+            logger.warning(f"Could not connect to n8n webhook at {target_url}.")
+            yield f'Tôi đã nghe thấy: "{text}". Hiện tại n8n chưa được kết nối, vui lòng kiểm tra webhook.'
         except Exception as e:
-            logger.error(f"Unexpected error while communicating with n8n: {e}", exc_info=True)
-            return DEFAULT_ERROR_MESSAGE
+            logger.error(f"Unexpected error while streaming from n8n: {e}", exc_info=True)
+            yield DEFAULT_ERROR_MESSAGE
+
+    async def send_message(
+        self,
+        session_id: str,
+        text: str,
+        custom_url: Optional[str] = None,
+    ) -> str:
+        """
+        Sends a request to n8n and returns the complete assembled response string.
+        """
+        chunks = []
+        async for chunk in self.stream_message(session_id, text, custom_url):
+            chunks.append(chunk)
+        return "".join(chunks).strip() or "Tôi đã ghi nhận thông tin của bạn."

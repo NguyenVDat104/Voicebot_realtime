@@ -366,23 +366,39 @@ async def websocket_audio_endpoint(websocket: WebSocket):
                 "text": transcription,
             })
 
-            # 4. Inform client: Calling n8n / LLM
+            # 4. Inform client: Calling n8n / LLM (Thinking State)
             await safe_send_json({
                 "type": "status",
                 "status": "thinking",
-                "detail": "Đang suy nghĩ câu trả lời...",
+                "detail": "Trợ lý AI đang suy nghĩ câu trả lời...",
+            })
+            await safe_send_json({
+                "type": "bot_thinking",
             })
 
-            # 5. Call n8n webhook
+            # 5. Call n8n webhook with real-time token streaming
             t_llm_start = time.perf_counter()
             ai_reply = ""
             if n8n_client:
-                ai_reply = await n8n_client.send_message(session_id, transcription)
+                async for chunk in n8n_client.stream_message(session_id, transcription):
+                    if not is_pipeline_running and not vad_detector.is_processing:
+                        break
+                    ai_reply += chunk
+                    await safe_send_json({
+                        "type": "bot_chunk",
+                        "chunk": chunk,
+                        "text": ai_reply,
+                    })
             else:
                 ai_reply = "Xin chào, tôi đã nghe rõ câu hỏi của bạn."
+                await safe_send_json({
+                    "type": "bot_chunk",
+                    "chunk": ai_reply,
+                    "text": ai_reply,
+                })
             llm_duration_ms = (time.perf_counter() - t_llm_start) * 1000
 
-            # 6. Send bot response text
+            # 6. Send bot response text finalization
             await safe_send_json({
                 "type": "bot_response",
                 "text": ai_reply,
@@ -477,23 +493,37 @@ async def websocket_audio_endpoint(websocket: WebSocket):
             is_bot_speaking = False
             vad_detector.set_bot_state(is_speaking=False, is_processing=True)
 
-            # 1. Inform client: Calling n8n / LLM
+            # 1. Inform client: Calling n8n / LLM (Thinking State)
             await safe_send_json({
                 "type": "status",
                 "status": "thinking",
-                "detail": "Đang suy nghĩ câu trả lời...",
+                "detail": "Trợ lý AI đang suy nghĩ câu trả lời...",
+            })
+            await safe_send_json({
+                "type": "bot_thinking",
             })
 
-            # 2. Call n8n webhook
+            # 2. Call n8n webhook with real-time streaming
             t_llm_start = time.perf_counter()
             ai_reply = ""
             if n8n_client:
-                ai_reply = await n8n_client.send_message(session_id, prompt_text)
+                async for chunk in n8n_client.stream_message(session_id, prompt_text):
+                    ai_reply += chunk
+                    await safe_send_json({
+                        "type": "bot_chunk",
+                        "chunk": chunk,
+                        "text": ai_reply,
+                    })
             else:
                 ai_reply = "Xin chào, tôi đã nhận được câu hỏi dạng văn bản của bạn."
+                await safe_send_json({
+                    "type": "bot_chunk",
+                    "chunk": ai_reply,
+                    "text": ai_reply,
+                })
             llm_duration_ms = (time.perf_counter() - t_llm_start) * 1000
 
-            # 3. Send bot response text
+            # 3. Send bot response text finalization
             await safe_send_json({
                 "type": "bot_response",
                 "text": ai_reply,

@@ -334,6 +334,7 @@ class VoicebotClient {
 
       this.stopCurrentAudio();
       this.appendMessage("user", text);
+      this.showBotThinking();
       this.ws.send(JSON.stringify({
         type: "user_text",
         text: text
@@ -636,6 +637,17 @@ class VoicebotClient {
 
       case "status":
         this.updateStatus(data.status, data.detail);
+        if (data.status === "thinking" || data.status === "processing") {
+          this.showBotThinking();
+        }
+        break;
+
+      case "bot_thinking":
+        this.showBotThinking();
+        break;
+
+      case "bot_chunk":
+        this.appendBotStreamChunk(data.chunk, data.text);
         break;
 
       case "vad_activity":
@@ -664,10 +676,11 @@ class VoicebotClient {
           this.userSpeechPcmChunks = [];
         }
         this.appendMessage("user", data.text, userAudioUrl);
+        this.showBotThinking();
         break;
 
       case "bot_response":
-        this.appendMessage("bot", data.text);
+        this.finalizeBotResponse(data.text);
         break;
 
       case "tts_stream_start":
@@ -808,6 +821,14 @@ class VoicebotClient {
 
   handleInterrupt(reason) {
     this.stopCurrentAudio();
+    this.removeBotThinking();
+    const streamBubble = document.getElementById("botStreamingBubble");
+    if (streamBubble) {
+      streamBubble.removeAttribute("id");
+      streamBubble.classList.remove("streaming");
+      const cursor = streamBubble.querySelector(".stream-cursor");
+      if (cursor) cursor.remove();
+    }
     this.allSentencesDone = true;
     this.isBotSpeaking = false;
 
@@ -871,6 +892,118 @@ class VoicebotClient {
         this.indicatorText.innerText = detail || "Nhấn nút microphone bên dưới để bắt đầu";
         break;
     }
+  }
+
+  showBotThinking() {
+    this.removeBotThinking();
+
+    // Remove welcome card if it's the first message
+    const welcomeCard = this.chatContainer.querySelector(".system-welcome-card");
+    if (welcomeCard) welcomeCard.remove();
+
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble bot-bubble thinking-bubble";
+    bubble.id = "botThinkingBubble";
+
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    const sender = `🤖 ${this.getAssistantName()}`;
+    const time = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    meta.innerHTML = `<span>${sender}</span><span>•</span><span>${time}</span>`;
+    bubble.appendChild(meta);
+
+    const content = document.createElement("div");
+    content.className = "message-content";
+    content.innerHTML = `
+      <span>Trợ lý AI đang suy nghĩ...</span>
+      <div class="thinking-spinner">
+        <span></span><span></span><span></span>
+      </div>
+    `;
+    bubble.appendChild(content);
+
+    this.chatContainer.appendChild(bubble);
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+  }
+
+  removeBotThinking() {
+    const existing = document.getElementById("botThinkingBubble");
+    if (existing) existing.remove();
+  }
+
+  appendBotStreamChunk(chunk, fullAccumulated = null) {
+    this.removeBotThinking();
+
+    let streamBubble = document.getElementById("botStreamingBubble");
+    if (!streamBubble) {
+      const welcomeCard = this.chatContainer.querySelector(".system-welcome-card");
+      if (welcomeCard) welcomeCard.remove();
+
+      streamBubble = document.createElement("div");
+      streamBubble.className = "message-bubble bot-bubble streaming";
+      streamBubble.id = "botStreamingBubble";
+
+      const meta = document.createElement("div");
+      meta.className = "message-meta";
+      const sender = `🤖 ${this.getAssistantName()}`;
+      const time = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+      meta.innerHTML = `<span>${sender}</span><span>•</span><span>${time}</span>`;
+      streamBubble.appendChild(meta);
+
+      const content = document.createElement("div");
+      content.className = "message-content";
+      content.innerHTML = `<span class="stream-text"></span><span class="stream-cursor"></span>`;
+      streamBubble.appendChild(content);
+
+      this.chatContainer.appendChild(streamBubble);
+    }
+
+    const textSpan = streamBubble.querySelector(".stream-text");
+    if (textSpan) {
+      if (fullAccumulated !== null && fullAccumulated !== undefined) {
+        textSpan.innerText = fullAccumulated;
+      } else {
+        textSpan.innerText += chunk;
+      }
+    }
+
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+  }
+
+  finalizeBotResponse(fullText) {
+    this.removeBotThinking();
+
+    const streamBubble = document.getElementById("botStreamingBubble");
+    if (streamBubble) {
+      streamBubble.removeAttribute("id");
+      streamBubble.classList.remove("streaming");
+      const cursor = streamBubble.querySelector(".stream-cursor");
+      if (cursor) cursor.remove();
+      const textSpan = streamBubble.querySelector(".stream-text");
+      if (textSpan) {
+        textSpan.innerText = fullText;
+      }
+
+      // Save to chat history
+      const sender = `🤖 ${this.getAssistantName()}`;
+      this.chatHistory.push({
+        id: Date.now(),
+        role: "bot",
+        senderName: sender,
+        text: fullText,
+        timestamp: new Date().toLocaleTimeString("vi-VN"),
+      });
+      try {
+        localStorage.setItem("voicebot_chat_history", JSON.stringify(this.chatHistory));
+      } catch (e) {}
+
+      const countBadge = document.getElementById("historyCountBadge");
+      if (countBadge) countBadge.innerText = this.chatHistory.length;
+    } else {
+      this.appendMessage("bot", fullText);
+    }
+
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
 
   appendMessage(role, text, audioUrl = null, saveHistory = true, customSenderName = null) {
