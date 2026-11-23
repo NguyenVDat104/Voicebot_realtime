@@ -23,6 +23,7 @@ except Exception:
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import numpy as np
@@ -81,6 +82,15 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Voicebot Audio Gateway...")
 
 app = FastAPI(title="Real-Time Vietnamese Voicebot", lifespan=lifespan)
+
+# Enable CORS for cross-origin integration (web widgets, mobile apps, remote dashboards)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Mount static directory
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
@@ -434,7 +444,16 @@ async def websocket_audio_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            message = await websocket.receive()
+            # Idle timeout: close session if no message/audio received within 120s (cleans up zombie connections)
+            try:
+                message = await asyncio.wait_for(websocket.receive(), timeout=120.0)
+            except asyncio.TimeoutError:
+                logger.info(f"WebSocket session {session_id} timed out after 120s of inactivity. Closing.")
+                await safe_send_json({
+                    "type": "timeout",
+                    "message": "Kết nối đã tự động đóng sau 120 giây không hoạt động.",
+                })
+                break
 
             if message.get("type") == "websocket.disconnect":
                 logger.info(f"Client disconnected: {session_id}")

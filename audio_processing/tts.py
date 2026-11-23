@@ -189,18 +189,31 @@ class EdgeTTSStreamer:
         if not sanitized:
             return
 
-        try:
-            communicate = edge_tts.Communicate(
-                text=sanitized,
-                voice=selected_voice,
-                rate=selected_rate,
-                pitch=self.pitch,
-            )
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                communicate = edge_tts.Communicate(
+                    text=sanitized,
+                    voice=selected_voice,
+                    rate=selected_rate,
+                    pitch=self.pitch,
+                )
 
-            async for chunk in communicate.stream():
-                if chunk["type"] == "audio":
-                    yield chunk["data"]
+                chunk_received = False
+                async for chunk in communicate.stream():
+                    if chunk["type"] == "audio":
+                        chunk_received = True
+                        yield chunk["data"]
 
-        except Exception as e:
-            logger.error(f"Error streaming TTS from edge-tts: {e}", exc_info=True)
+                if chunk_received:
+                    return
+
+            except Exception as e:
+                logger.warning(
+                    f"Edge-TTS stream attempt {attempt + 1}/{max_retries} failed for sentence '{sanitized[:30]}...' ({e})."
+                )
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(0.3)
+                else:
+                    logger.error(f"Edge-TTS failed after {max_retries} attempts for: '{sanitized}'", exc_info=True)
 

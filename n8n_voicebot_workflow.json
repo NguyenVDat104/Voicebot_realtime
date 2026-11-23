@@ -1,0 +1,87 @@
+{
+  "name": "Vietnamese Voicebot AI Brain Template",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voicebot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-in",
+      "name": "Webhook (Receive Voicebot Text)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Người dùng nói: {{$json.body.text}} (Phiên: {{$json.body.session_id}})",
+        "options": {
+          "systemMessage": "Bạn là trợ lý ảo tiếng Việt thông minh, thân thiện và phản hồi ngắn gọn, súc tích (1-2 câu ngắn). Hãy trả lời tự nhiên như đang nói chuyện trực tiếp, KHÔNG dùng emoji, KHÔNG dùng định dạng markdown in đậm hoặc gạch đầu dòng."
+        }
+      },
+      "id": "node-ai-agent",
+      "name": "AI Agent (Conversational LLM)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"session_id\": \"{{$('Webhook (Receive Voicebot Text)').item.json.body.session_id}}\",\n  \"output\": \"{{$json.output}}\"\n}",
+        "options": {}
+      },
+      "id": "node-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (Receive Voicebot Text)": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Conversational LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Conversational LLM)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "voicebot-ai-workflow-template"
+  }
+}

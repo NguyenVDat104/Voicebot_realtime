@@ -1,0 +1,49 @@
+# Git & Version Control
+.git/
+.gitignore
+
+# Python caches & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Lab assignments & BTL (keep Docker image lightweight and focused on Voicebot)
+lab1/
+lab2/
+lab3/
+lab4/
+lab5/
+btlms/
+btlms.zip
+
+# Audio recordings & outputs
+*.wav
+*.mp3
+*.m4a
+audio_output/
+raw_recording/
+temp/
+temp_audio/
+
+# Logs & documentation
+*.log
+implementation_plan.md
+Pipeline.txt
+README.md
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

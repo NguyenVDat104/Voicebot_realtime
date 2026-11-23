@@ -1,0 +1,20 @@
+services:
+  voicebot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voicebot-desktop
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - N8N_HOST_GATEWAY=host.docker.internal
+    volumes:
+      # Tái sử dụng cache mô hình đã tải trên máy tính để khởi động ngay lập tức
+      - "${USERPROFILE}/.cache/huggingface:/root/.cache/huggingface"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
