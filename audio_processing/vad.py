@@ -154,13 +154,13 @@ class SileroVADDetector:
 
         # Adjust sensitivity based on bot state (Acoustic Echo suppression & Barge-in)
         if self.is_bot_speaking:
-            threshold = self.threshold + 0.05  # 0.55 threshold (sensitive enough for natural human voice to barge-in)
-            min_rms = max(0.010, self.ambient_noise_rms * 2.0)
-            barge_in_target = self.min_barge_in_samples  # 240ms of clear voice to interrupt
+            threshold = 0.78  # High confidence required to prevent speaker echo triggering false barge-in
+            min_rms = max(0.035, self.ambient_noise_rms * 3.5)  # Speaker bleed leaking into mic won't exceed this
+            barge_in_target = int(0.55 * self.sample_rate)  # 550ms of sustained speech to confirm intentional human interrupt
         elif self.is_bot_processing:
-            threshold = self.threshold  # 0.50 standard threshold
-            min_rms = max(0.008, self.ambient_noise_rms * 1.8)
-            barge_in_target = self.min_barge_in_samples  # 240ms to cancel background thinking
+            threshold = 0.65
+            min_rms = max(0.020, self.ambient_noise_rms * 2.5)
+            barge_in_target = int(0.40 * self.sample_rate)
         else:
             threshold = self.threshold
             min_rms = max(0.008, self.ambient_noise_rms * 1.8)

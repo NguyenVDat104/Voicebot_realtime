@@ -535,7 +535,18 @@ class VoicebotClient {
       if (!this.isRecording) return;
 
       const inputData = e.inputBuffer.getChannelData(0);
-      const pcm16 = this.downsampleAndConvertToInt16(inputData, e.inputBuffer.sampleRate, 16000);
+      
+      // If bot is actively playing audio through speakers, attenuate mic input
+      // to eliminate acoustic echo feedback while preserving intentional user interruptions
+      let audioForVad = inputData;
+      if (this.isBotSpeaking) {
+        audioForVad = new Float32Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          audioForVad[i] = inputData[i] * 0.35;
+        }
+      }
+
+      const pcm16 = this.downsampleAndConvertToInt16(audioForVad, e.inputBuffer.sampleRate, 16000);
 
       // Buffer audio for User Audio Replay feature
       this.userSpeechPcmChunks.push(new Int16Array(pcm16));
@@ -849,6 +860,9 @@ class VoicebotClient {
   }
 
   onPlaybackFinished() {
+    if (this.playbackQueue.length > 0 || this.isPlayingQueue) {
+      return;
+    }
     this.isBotSpeaking = false;
     this.currentSentenceChunks = [];
     this.playbackQueue = [];

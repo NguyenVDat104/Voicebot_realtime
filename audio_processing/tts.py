@@ -85,15 +85,27 @@ def sanitize_text_for_tts(text: str) -> str:
     )
     cleaned = emoji_pattern.sub('', cleaned)
 
-    # 7. Remove remaining standalone special characters (*, #, @, $, %, ^, &, _, |, <, >)
-    cleaned = re.sub(r'[*#@$%^&_|~<>{}[\]]', ' ', cleaned)
+    # 7. Remove quotes, parentheses, slashes, colons, brackets (which break Edge-TTS XML SSML)
+    for q in ['"', "'", "“", "”", "‘", "’", "«", "»", "`"]:
+        cleaned = cleaned.replace(q, "")
+    cleaned = cleaned.replace("(", ", ").replace(")", ", ")
+    cleaned = cleaned.replace("[", ", ").replace("]", ", ")
+    cleaned = cleaned.replace("{", ", ").replace("}", ", ")
+    cleaned = cleaned.replace("/", " hoặc ").replace("\\", " ")
+    cleaned = re.sub(r':\s*', ', ', cleaned)
+    cleaned = re.sub(r'[\-–—]{1,}', ', ', cleaned)
+    cleaned = re.sub(r';\s*', ', ', cleaned)
 
-    # 8. Collapse repeated punctuation (e.g. "??" -> "?", "!!" -> "!")
+    # 8. Remove remaining standalone special characters (*, #, @, $, %, ^, &, _, |, <, >)
+    cleaned = re.sub(r'[*#@$%^&_|~<>]', ' ', cleaned)
+
+    # 9. Collapse repeated punctuation (e.g. "??" -> "?", "!!" -> "!")
     cleaned = re.sub(r'\.{2,}', '.', cleaned)
     cleaned = re.sub(r'\?{2,}', '?', cleaned)
     cleaned = re.sub(r'!{2,}', '!', cleaned)
+    cleaned = re.sub(r',{2,}', ',', cleaned)
 
-    # 9. Clean up whitespace
+    # 10. Clean up whitespace
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
 
     return cleaned
@@ -189,13 +201,21 @@ class EdgeTTSStreamer:
         if not sanitized:
             return
 
-        max_retries = 2
+        max_retries = 3
         for attempt in range(max_retries):
             try:
+                # If attempt > 0, fallback to standard rate "+0%" and extra plain text
+                use_voice = selected_voice
+                use_rate = selected_rate if attempt == 0 else "+0%"
+                use_text = sanitized if attempt == 0 else re.sub(r'[^0-9a-zA-ZÀ-ỹ\s,\.]', ' ', sanitized)
+                use_text = re.sub(r'\s+', ' ', use_text).strip()
+                if not use_text:
+                    return
+
                 communicate = edge_tts.Communicate(
-                    text=sanitized,
-                    voice=selected_voice,
-                    rate=selected_rate,
+                    text=use_text,
+                    voice=use_voice,
+                    rate=use_rate,
                     pitch=self.pitch,
                 )
 
@@ -210,10 +230,10 @@ class EdgeTTSStreamer:
 
             except Exception as e:
                 logger.warning(
-                    f"Edge-TTS stream attempt {attempt + 1}/{max_retries} failed for sentence '{sanitized[:30]}...' ({e})."
+                    f"Edge-TTS stream attempt {attempt + 1}/{max_retries} failed for sentence '{sanitized[:30]}...' ({e}). Retrying..."
                 )
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(0.2)
                 else:
                     logger.error(f"Edge-TTS failed after {max_retries} attempts for: '{sanitized}'", exc_info=True)
 
