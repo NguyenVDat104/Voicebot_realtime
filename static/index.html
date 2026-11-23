@@ -3,307 +3,684 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trợ Lý Ảo Tiếng Việt - Giao Tiếp Giọng Nói Thông Minh</title>
-  <meta name="description" content="Trợ lý ảo tiếng Việt thông minh, hỗ trợ nhận diện và phản hồi giọng nói thời gian thực cực nhanh với trải nghiệm tự nhiên." />
+  <title>Voicebot AI - Nền Tảng Đàm Thoại Giọng Nói Tiếng Việt Thời Gian Thực</title>
+  <meta name="description" content="Hệ thống Trợ lý Hội thoại Tiếng Việt Song công (Full-Duplex), nhận diện và phản hồi giọng nói tức thì với độ trễ dưới 800ms." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
-  <!-- Soft Ambient Background Elements -->
+<body class="theme-dark">
+  <!-- Subtle Ambient Glow Background -->
   <div class="ambient-backdrop">
     <div class="ambient-glow glow-top"></div>
     <div class="ambient-glow glow-bottom"></div>
   </div>
 
-  <div class="app-wrapper">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand-identity">
-        <div class="brand-avatar">
-          <span class="brand-avatar-icon">✨</span>
+  <div class="app-layout">
+    <!-- ====================================================================== -->
+    <!-- LEFT VERTICAL SIDEBAR MENU (CHỈN CHU, HIỆN ĐẠI CHUẨN SAAS STUDIO)     -->
+    <!-- ====================================================================== -->
+    <aside class="app-sidebar" id="appSidebar">
+      <!-- Sidebar Brand Header -->
+      <div class="sidebar-brand">
+        <div class="brand-logo-glow">
+          <div class="brand-logo-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </div>
         </div>
-        <div class="brand-info">
-          <h1 class="brand-title">Trợ Lý Ảo Tiếng Việt</h1>
-          <p class="brand-tagline">Trò chuyện giọng nói tự nhiên thời gian thực</p>
+        <div class="brand-text">
+          <div class="brand-name">
+            <span>Voicebot AI</span>
+            <span class="badge-pro">PRO</span>
+          </div>
+          <span class="brand-sub">Full-Duplex Vietnamese</span>
         </div>
       </div>
 
-      <div class="header-actions">
-        <!-- Connection Status Pill -->
-        <div class="connection-pill" id="connectionBadge">
-          <span class="status-dot"></span>
-          <span class="status-label" id="connectionText">Đang ngắt kết nối</span>
-        </div>
-
-        <!-- Settings Button -->
-        <button id="toggleSettingsBtn" class="btn-action-icon" title="Cài đặt giọng nói & hệ thống" aria-label="Cài đặt">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
+      <!-- Navigation Menu Items -->
+      <div class="sidebar-section-title">CHỨC NĂNG CHÍNH</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="voicebot">
+          <span class="nav-icon">🎙️</span>
+          <span class="nav-label">Đàm thoại AI</span>
+          <span class="nav-badge-live">Live</span>
         </button>
+
+        <button class="nav-item" data-tab="history">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Nhật ký hội thoại</span>
+          <span class="nav-count" id="historyCountBadge">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="analytics">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Phân tích & Độ trễ</span>
+        </button>
+
+        <button class="nav-item" data-tab="settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Cài đặt giọng nói</span>
+        </button>
+
+        <button class="nav-item" data-tab="docs">
+          <span class="nav-icon">📖</span>
+          <span class="nav-label">Kiến trúc & API</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Status & Model Quick Info -->
+      <div class="sidebar-system-card">
+        <div class="system-card-title">HẠ TẦNG XỬ LÝ (DSP)</div>
+        <div class="system-stat-row">
+          <span class="stat-name">ASR Model:</span>
+          <span class="stat-val highlight">PhoWhisper / Groq</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-name">VAD Engine:</span>
+          <span class="stat-val">Silero ONNX</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-name">Sampling:</span>
+          <span class="stat-val">16,000 Hz Mono</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-name">Barge-in:</span>
+          <span class="stat-val highlight-green">Kích hoạt (240ms)</span>
+        </div>
       </div>
-    </header>
 
-    <!-- Main 2-Column Content Layout -->
-    <main class="content-grid">
-      <!-- Left: Assistant Persona & Voice Interaction Hub -->
-      <section class="assistant-hub-card card-surface">
-        <div class="hub-header">
-          <div class="assistant-state-pill" id="currentModeTag">Sẵn sàng</div>
-          <div class="session-badge" id="sessionDisplay">Phiên: Đang khởi tạo...</div>
-        </div>
-
-        <!-- Voice Interaction Breathing Orb & Visualizer -->
-        <div class="voice-aura-wrapper">
-          <div class="voice-aura-outer">
-            <div class="voice-aura-core">
-              <div class="assistant-avatar-large">
-                <span class="avatar-emoji" id="assistantOrbAvatar">🤖</span>
-              </div>
-            </div>
-            <div class="aura-wave wave-1"></div>
-            <div class="aura-wave wave-2"></div>
-            <div class="aura-wave wave-3"></div>
+      <!-- Sidebar Footer: User Profile & Log-in / Log-out -->
+      <div class="sidebar-user-widget">
+        <!-- Logged In State View -->
+        <div class="user-profile-box" id="sidebarUserProfile">
+          <div class="user-avatar-wrap">
+            <span class="user-avatar-symbol" id="sidebarUserAvatar">👨‍💻</span>
+            <span class="user-online-dot"></span>
           </div>
-          <canvas id="audioVisualizer" class="fluid-canvas" width="400" height="120"></canvas>
-        </div>
-
-        <!-- Friendly Status Description -->
-        <div class="friendly-status-box">
-          <span class="status-icon" id="indicatorIcon">🎙️</span>
-          <p class="status-instruction" id="indicatorText">Nhấn nút gọi hoặc giữ phím Space để trò chuyện cùng trợ lý</p>
-        </div>
-
-        <!-- Call & Microphone Control Button -->
-        <div class="call-control-section">
-          <button id="mainMicBtn" class="call-action-btn" title="Bắt đầu cuộc trò chuyện" aria-label="Microphone">
-            <div class="call-btn-halo"></div>
-            <div class="call-btn-inner">
-              <svg id="micSvgIcon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-              </svg>
-            </div>
+          <div class="user-text-info">
+            <div class="user-display-name" id="sidebarUserName">Nguyễn Văn Đạt</div>
+            <div class="user-display-role" id="sidebarUserRole">Kỹ sư AI / Admin</div>
+          </div>
+          <button id="sidebarLogoutBtn" class="btn-logout" title="Đăng xuất khỏi hệ thống" aria-label="Đăng xuất">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
           </button>
-          <span class="call-btn-hint" id="micBtnHint">Chạm để bắt đầu nói</span>
         </div>
 
-        <!-- Friendly Starters / Quick Prompts -->
-        <div class="quick-starters">
-          <div class="starters-label">Gợi ý câu hỏi:</div>
-          <div class="starters-list">
-            <button class="starter-chip" data-prompt="Xin chào, bạn có thể giúp gì cho tôi?">👋 Giới thiệu bản thân</button>
-            <button class="starter-chip" data-prompt="Kể cho tôi một câu chuyện vui ngắn nhé!">😄 Kể chuyện vui</button>
-            <button class="starter-chip" data-prompt="Làm thế nào để có một ngày làm việc tràn đầy năng lượng?">⚡ Năng lượng tích cực</button>
+        <!-- Logged Out State View (Hidden by default when logged in) -->
+        <div class="user-login-prompt hidden" id="sidebarLoginPrompt">
+          <div class="login-prompt-icon">🔒</div>
+          <div class="login-prompt-text">
+            <span>Chưa đăng nhập</span>
+            <small>Đăng nhập để lưu phiên</small>
+          </div>
+          <button id="sidebarLoginTriggerBtn" class="btn-login-small">Đăng nhập</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ====================================================================== -->
+    <!-- MAIN CONTENT AREA (DYNAMIC TABS)                                       -->
+    <!-- ====================================================================== -->
+    <div class="app-main-viewport">
+      <!-- Top Application Header Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button id="sidebarToggleBtn" class="btn-sidebar-toggle" title="Thu gọn / Mở rộng menu">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="topbar-breadcrumb">
+            <h2 id="topbarTabTitle" class="tab-title-text">🎙️ Đàm thoại trực tiếp</h2>
+            <span class="session-badge" id="sessionDisplay">Phiên: Đang khởi tạo...</span>
           </div>
         </div>
 
-        <!-- Collapsible Technical Latency Panel (Clean & Unobtrusive) -->
-        <details class="latency-accordion">
-          <summary class="latency-summary">
-            <div class="summary-left">
-              <span class="summary-icon">⚡</span>
-              <span class="summary-title">Tốc độ phản hồi:</span>
-              <span class="metric-value metric-badge" id="totalMetricVal">-- s</span>
-            </div>
-            <span class="summary-toggle-text">Chi tiết kỹ thuật ▾</span>
-          </summary>
-          <div class="latency-strip" id="latencyStrip">
-            <div class="latency-metric" id="sttMetric">
-              <span class="metric-label">🎙️ Nghe (STT)</span>
-              <span class="metric-value" id="sttMetricVal">-- ms</span>
-            </div>
-            <div class="latency-metric" id="llmMetric">
-              <span class="metric-label">🧠 Xử lý (Brain)</span>
-              <span class="metric-value" id="llmMetricVal">-- ms</span>
-            </div>
-            <div class="latency-metric" id="ttsMetric">
-              <span class="metric-label">🔊 Đọc (TTS)</span>
-              <span class="metric-value" id="ttsMetricVal">-- ms</span>
-            </div>
-            <div class="latency-metric total-metric" id="totalMetric">
-              <span class="metric-label">⚡ Tổng (E2E)</span>
-              <span class="metric-value" id="totalMetricDetailVal">-- ms</span>
-            </div>
+        <div class="topbar-right">
+          <!-- Connection Status Pill -->
+          <div class="connection-pill" id="connectionBadge">
+            <span class="status-dot"></span>
+            <span class="status-label" id="connectionText">Đang kết nối...</span>
           </div>
-        </details>
 
-        <!-- Keyboard Shortcuts Hint -->
-        <div class="shortcut-legend">
-          <span>💡 Phím <kbd>Space</kbd>: Giữ để nói • Phím <kbd>Esc</kbd>: Ngắt lời trợ lý</span>
-        </div>
-      </section>
-
-      <!-- Right: Conversational Stream & Message History -->
-      <section class="conversation-card card-surface">
-        <div class="conversation-header">
-          <div class="conversation-heading">
-            <h2>Nội dung trò chuyện</h2>
-            <span class="conversation-sub">Ghi nhận cuộc đối thoại trực tiếp</span>
+          <!-- Real-Time TTFA Latency Pill -->
+          <div class="latency-pill" title="Thời gian từ lúc dứt câu đến khi âm thanh đầu tiên vang lên">
+            <span class="latency-pill-icon">⚡</span>
+            <span class="latency-pill-label">TTFA:</span>
+            <span class="latency-pill-val" id="totalMetricVal">-- s</span>
           </div>
-          <div class="conversation-tools">
-            <button id="exportTxtBtn" class="btn-tool-pill" title="Tải cuộc trò chuyện dạng file văn bản (.txt)">
-              <span>📄 TXT</span>
-            </button>
-            <button id="exportJsonBtn" class="btn-tool-pill" title="Tải dữ liệu phân tích dạng JSON (.json)">
-              <span>💾 JSON</span>
-            </button>
-            <button id="clearChatBtn" class="btn-tool-pill btn-tool-danger" title="Xóa toàn bộ lịch sử trò chuyện">
-              <span>🗑️ Làm mới</span>
-            </button>
+
+          <!-- User Chip Quick Action -->
+          <div class="topbar-user-chip" id="topbarUserChip">
+            <span class="user-chip-avatar" id="topbarUserAvatar">👨‍💻</span>
+            <span class="user-chip-name" id="topbarUserName">Nguyễn Văn Đạt</span>
           </div>
         </div>
+      </header>
 
-        <!-- Chat Stream Bubbles -->
-        <div class="chat-messages" id="chatContainer">
-          <div class="system-welcome-card">
-            <div class="welcome-icon">💬</div>
-            <h3>Xin chào bạn!</h3>
-            <p>Tôi là Trợ lý ảo tiếng Việt, sẵn sàng lắng nghe và phản hồi bằng giọng nói tự nhiên. Hãy bấm nút micro hoặc gửi tin nhắn bên dưới để bắt đầu nhé!</p>
-          </div>
-        </div>
-
-        <!-- Hybrid Typing & Voice Message Input Bar -->
-        <div class="chat-input-wrapper">
-          <div class="chat-input-box">
-            <input type="text" id="textPromptInput" placeholder="Nhập tin nhắn hoặc nói trực tiếp qua mic..." autocomplete="off" />
-            <button id="sendTextBtn" class="send-message-btn" title="Gửi tin nhắn (Enter)" aria-label="Gửi tin nhắn">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
-
-    <!-- Smart, User-Friendly Settings Modal -->
-    <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
-      <div class="modal-dialog card-surface">
-        <div class="modal-dialog-header">
-          <div class="modal-title-group">
-            <h3 id="settingsModalTitle">Tùy chỉnh Trợ Lý Ảo</h3>
-            <p class="modal-subtitle">Điều chỉnh giọng nói và môi trường trò chuyện</p>
-          </div>
-          <button id="closeSettingsBtn" class="btn-close-modal" aria-label="Đóng cài đặt">&times;</button>
-        </div>
-
-        <div class="modal-dialog-body">
-          <!-- Voice Persona Selection Cards -->
-          <div class="settings-section">
-            <label class="section-label">Giọng đọc Trợ lý (Voice)</label>
-            <div class="voice-cards-grid">
-              <div class="voice-card active" data-voice="vi-VN-HoaiMyNeural">
-                <div class="voice-card-avatar female-avatar">👩</div>
-                <div class="voice-card-info">
-                  <div class="voice-name">Ngọc Trinh <span class="voice-tag">Nữ</span></div>
-                  <div class="voice-desc">Truyền cảm, ấm áp, giọng chuẩn miền Bắc</div>
-                </div>
-                <div class="voice-check-badge">✓</div>
+      <!-- TAB CONTAINER -->
+      <div class="tab-content-container">
+        <!-- ================================================================== -->
+        <!-- TAB 1: LIVE VOICEBOT WORKBENCH                                     -->
+        <!-- ================================================================== -->
+        <section id="paneVoicebot" class="tab-pane active">
+          <div class="voicebot-workbench-grid">
+            <!-- Left Sub-card: Interactive Persona & Audio Aura Hub -->
+            <div class="assistant-hub-card card-surface">
+              <div class="hub-header">
+                <div class="assistant-state-pill" id="currentModeTag">Sẵn sàng</div>
+                <div class="voice-persona-badge" id="hubVoiceBadge">Giọng: Ngọc Trinh (Nữ)</div>
               </div>
 
-              <div class="voice-card" data-voice="vi-VN-NamMinhNeural">
-                <div class="voice-card-avatar male-avatar">👨</div>
-                <div class="voice-card-info">
-                  <div class="voice-name">Nguyễn Đạt <span class="voice-tag">Nam</span></div>
-                  <div class="voice-desc">Chững chạc, tự nhiên, giọng chuẩn miền Bắc</div>
+              <!-- Breathing Audio Aura & Wave Visualizer -->
+              <div class="voice-aura-wrapper">
+                <div class="voice-aura-outer">
+                  <div class="voice-aura-core">
+                    <div class="assistant-avatar-large">
+                      <span class="avatar-emoji" id="assistantOrbAvatar">🤖</span>
+                    </div>
+                  </div>
+                  <div class="aura-wave wave-1"></div>
+                  <div class="aura-wave wave-2"></div>
+                  <div class="aura-wave wave-3"></div>
                 </div>
-                <div class="voice-check-badge">✓</div>
+                <canvas id="audioVisualizer" class="fluid-canvas" width="400" height="120"></canvas>
               </div>
-            </div>
-            <!-- Hidden native select for 100% JS compatibility -->
-            <select id="ttsVoiceSelect" class="hidden-select">
-              <option value="vi-VN-HoaiMyNeural" selected>Ngọc Trinh (Nữ)</option>
-              <option value="vi-VN-NamMinhNeural">Nguyễn Đạt (Nam)</option>
-            </select>
-          </div>
 
-          <!-- Speech Speed Rate Pills -->
-          <div class="settings-section">
-            <label class="section-label">Tốc độ phát âm</label>
-            <div class="speed-pills-row">
-              <button type="button" class="speed-pill" data-rate="-20%">Chậm (0.8x)</button>
-              <button type="button" class="speed-pill" data-rate="+0%">Bình thường (1.0x)</button>
-              <button type="button" class="speed-pill active" data-rate="+15%">Nhanh (1.15x) ⭐</button>
-              <button type="button" class="speed-pill" data-rate="+30%">Rất nhanh (1.3x)</button>
-            </div>
-            <!-- Hidden native select for JS sync -->
-            <select id="ttsRateSelect" class="hidden-select">
-              <option value="-20%">0.8x</option>
-              <option value="+0%">1.0x</option>
-              <option value="+15%" selected>1.15x</option>
-              <option value="+30%">1.3x</option>
-            </select>
-          </div>
+              <!-- Friendly Dynamic Status Instruction -->
+              <div class="friendly-status-box">
+                <span class="status-icon" id="indicatorIcon">🎙️</span>
+                <p class="status-instruction" id="indicatorText">Nhấn nút gọi hoặc giữ phím Space để trò chuyện cùng trợ lý</p>
+              </div>
 
-          <!-- Environment Presets (Replacing raw VAD parameters) -->
-          <div class="settings-section">
-            <label class="section-label">Môi trường sử dụng (Lọc tiếng ồn)</label>
-            <div class="env-presets-grid">
-              <div class="env-card active" data-preset="quiet" data-silence="600" data-threshold="0.45">
-                <div class="env-icon">🏠</div>
-                <div class="env-content">
-                  <div class="env-title">Phòng yên tĩnh</div>
-                  <div class="env-desc">Nhận diện nhạy bén, tốc độ phản hồi nhanh nhất</div>
+              <!-- Main Call & Microphone Control Button -->
+              <div class="call-control-section">
+                <button id="mainMicBtn" class="call-action-btn" title="Bắt đầu cuộc trò chuyện" aria-label="Microphone">
+                  <div class="call-btn-halo"></div>
+                  <div class="call-btn-inner">
+                    <svg id="micSvgIcon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                      <line x1="12" y1="19" x2="12" y2="22" />
+                    </svg>
+                  </div>
+                </button>
+                <span class="call-btn-hint" id="micBtnHint">Chạm để bắt đầu nói</span>
+              </div>
+
+              <!-- Quick Starter Prompts -->
+              <div class="quick-starters">
+                <div class="starters-label">Gợi ý câu hỏi:</div>
+                <div class="starters-list">
+                  <button class="starter-chip" data-prompt="Xin chào, bạn có thể giúp gì cho tôi?">👋 Giới thiệu bản thân</button>
+                  <button class="starter-chip" data-prompt="Kể cho tôi một câu chuyện vui ngắn nhé!">😄 Kể chuyện vui</button>
+                  <button class="starter-chip" data-prompt="Làm thế nào để có một ngày làm việc tràn đầy năng lượng?">⚡ Năng lượng tích cực</button>
                 </div>
               </div>
 
-              <div class="env-card" data-preset="noisy" data-silence="700" data-threshold="0.60">
-                <div class="env-icon">☕</div>
-                <div class="env-content">
-                  <div class="env-title">Nhiều tạp âm / Quán cà phê</div>
-                  <div class="env-desc">Tăng cường lọc tạp âm, chống bắt nhầm tiếng bên ngoài</div>
+              <!-- Technical Latency Metrics (STT, Brain, TTS, Total) -->
+              <div class="latency-metrics-widget">
+                <div class="latency-strip-grid" id="latencyStrip">
+                  <div class="latency-metric-box">
+                    <span class="metric-lbl">🎙️ STT</span>
+                    <span class="metric-num" id="sttMetricVal">-- ms</span>
+                  </div>
+                  <div class="latency-metric-box">
+                    <span class="metric-lbl">🧠 Brain</span>
+                    <span class="metric-num" id="llmMetricVal">-- ms</span>
+                  </div>
+                  <div class="latency-metric-box">
+                    <span class="metric-lbl">🔊 TTS</span>
+                    <span class="metric-num" id="ttsMetricVal">-- ms</span>
+                  </div>
+                  <div class="latency-metric-box highlight-box">
+                    <span class="metric-lbl">⚡ Tổng</span>
+                    <span class="metric-num highlight-text" id="totalMetricDetailVal">-- ms</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Shortcut Legend -->
+              <div class="shortcut-legend">
+                <span>💡 Phím <kbd>Space</kbd>: Giữ nói • Phím <kbd>Esc</kbd>: Ngắt lời trợ lý</span>
+              </div>
+            </div>
+
+            <!-- Right Sub-card: Conversational Message Stream -->
+            <div class="conversation-card card-surface">
+              <div class="conversation-header">
+                <div class="conversation-heading">
+                  <h2>Nội dung trò chuyện</h2>
+                  <span class="conversation-sub">Ghi nhận cuộc đối thoại trực tiếp theo thời gian thực</span>
+                </div>
+                <div class="conversation-tools">
+                  <button id="exportTxtBtn" class="btn-tool-pill" title="Tải cuộc trò chuyện dạng file văn bản (.txt)">
+                    <span>📄 TXT</span>
+                  </button>
+                  <button id="exportJsonBtn" class="btn-tool-pill" title="Tải dữ liệu phân tích dạng JSON (.json)">
+                    <span>💾 JSON</span>
+                  </button>
+                  <button id="clearChatBtn" class="btn-tool-pill btn-tool-danger" title="Xóa toàn bộ lịch sử trò chuyện">
+                    <span>🗑️ Làm mới</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Chat Message Bubbles Container -->
+              <div class="chat-messages" id="chatContainer">
+                <div class="system-welcome-card">
+                  <div class="welcome-icon">💬</div>
+                  <h3>Xin chào bạn!</h3>
+                  <p>Tôi là Trợ lý ảo tiếng Việt, sẵn sàng lắng nghe và phản hồi bằng giọng nói tự nhiên. Hãy bấm nút micro hoặc gửi tin nhắn bên dưới để bắt đầu nhé!</p>
+                </div>
+              </div>
+
+              <!-- Message Input Bar (Hybrid Voice & Typing) -->
+              <div class="chat-input-wrapper">
+                <div class="chat-input-box">
+                  <input type="text" id="textPromptInput" placeholder="Nhập tin nhắn hoặc nói trực tiếp qua micro..." autocomplete="off" />
+                  <button id="sendTextBtn" class="send-message-btn" title="Gửi tin nhắn (Enter)" aria-label="Gửi tin nhắn">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
+        </section>
 
-          <!-- Collapsible Advanced Settings (For Developers / Power Users) -->
-          <details class="advanced-settings-accordion">
-            <summary class="advanced-settings-summary">
-              <span>⚙️ Cài đặt nâng cao (Kỹ thuật & Máy chủ)</span>
-              <span class="chevron">▾</span>
-            </summary>
-            <div class="advanced-settings-content">
-              <div class="form-field">
-                <label for="wsUrlInput">Địa chỉ kết nối WebSocket</label>
-                <input type="text" id="wsUrlInput" class="form-text-input" />
+        <!-- ================================================================== -->
+        <!-- TAB 2: CONVERSATION HISTORY & SESSIONS                             -->
+        <!-- ================================================================== -->
+        <section id="paneHistory" class="tab-pane">
+          <div class="subpage-container card-surface">
+            <div class="subpage-header">
+              <div>
+                <h2>💬 Lịch sử các phiên đối thoại</h2>
+                <p class="subpage-desc">Quản lý và tra cứu các cuộc hội thoại giọng nói đã diễn ra</p>
               </div>
-
-              <div class="form-field">
-                <label for="sessionIdInput">Mã phiên trò chuyện (Session ID)</label>
-                <input type="text" id="sessionIdInput" class="form-text-input" />
+              <div class="subpage-actions">
+                <button id="historyRefreshBtn" class="btn-secondary-action">🔄 Cập nhật</button>
+                <button id="historyClearAllBtn" class="btn-secondary-action btn-danger-action">🗑️ Xóa toàn bộ</button>
               </div>
+            </div>
 
-              <div class="form-field-row">
-                <div class="form-field">
-                  <label for="vadSensitivity">Độ nhạy im lặng (ms)</label>
-                  <input type="number" id="vadSensitivity" class="form-text-input" value="700" step="50" min="400" max="1500" />
+            <!-- Filter & Search Bar -->
+            <div class="history-search-row">
+              <input type="text" id="historySearchInput" class="form-text-input" placeholder="🔍 Tìm kiếm nội dung câu nói..." />
+            </div>
+
+            <!-- History Sessions List -->
+            <div class="history-list" id="historySessionList">
+              <!-- Rendered dynamically via app.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- TAB 3: AUDIO & LATENCY ANALYTICS DASHBOARD                         -->
+        <!-- ================================================================== -->
+        <section id="paneAnalytics" class="tab-pane">
+          <div class="subpage-container card-surface">
+            <div class="subpage-header">
+              <div>
+                <h2>📊 Phân tích Âm học & Đo lường Độ trễ</h2>
+                <p class="subpage-desc">Chỉ số chi tiết về tốc độ xử lý tín hiệu số (DSP), nhận dạng và tổng hợp giọng nói</p>
+              </div>
+              <button id="analyticsResetBtn" class="btn-secondary-action">Làm mới đo lường</button>
+            </div>
+
+            <!-- Big Stat KPI Cards -->
+            <div class="analytics-kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-icon icon-cyan">🎙️</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Độ trễ Nhận dạng (STT)</span>
+                  <span class="kpi-val" id="kpiSttVal">240 ms</span>
+                  <span class="kpi-sub">PhoWhisper / Groq API</span>
                 </div>
-                <div class="form-field">
-                  <label for="vadThreshold">Ngưỡng lọc tạp âm (0.30 - 0.80)</label>
-                  <input type="number" id="vadThreshold" class="form-text-input" value="0.50" step="0.05" min="0.30" max="0.80" />
+              </div>
+
+              <div class="kpi-card">
+                <div class="kpi-icon icon-purple">🧠</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Độ trễ Bộ não (Brain/n8n)</span>
+                  <span class="kpi-val" id="kpiLlmVal">380 ms</span>
+                  <span class="kpi-sub">n8n LLM Webhook Engine</span>
+                </div>
+              </div>
+
+              <div class="kpi-card">
+                <div class="kpi-icon icon-emerald">🔊</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Độ trễ Tiếng nói đầu tiên (TTFA)</span>
+                  <span class="kpi-val" id="kpiTtsVal">210 ms</span>
+                  <span class="kpi-sub">Edge-TTS Sentence Pipelining</span>
+                </div>
+              </div>
+
+              <div class="kpi-card highlight-kpi">
+                <div class="kpi-icon icon-amber">⚡</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Độ trễ Toàn trình (End-to-End)</span>
+                  <span class="kpi-val" id="kpiTotalVal">830 ms</span>
+                  <span class="kpi-sub">Sub-second Full-Duplex</span>
                 </div>
               </div>
             </div>
-          </details>
-        </div>
 
-        <div class="modal-dialog-footer">
-          <button id="saveSettingsBtn" class="btn-primary-action">Áp dụng thiết lập</button>
-        </div>
+            <!-- Technical DSP Specs Table -->
+            <div class="analytics-table-card">
+              <h3 class="table-card-title">⚙️ Thông số Kỹ thuật Chuỗi DSP Âm thanh</h3>
+              <table class="specs-table">
+                <thead>
+                  <tr>
+                    <th>Khối xử lý</th>
+                    <th>Tham số kỹ thuật</th>
+                    <th>Giá trị thiết lập</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Tần số lấy mẫu (Sampling)</strong></td>
+                    <td>Chuẩn hóa AudioContext & Resampling</td>
+                    <td><code>16,000 Hz, Mono, 16-bit Int16</code></td>
+                    <td><span class="badge-status-ok">Hoạt động</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Lọc tín hiệu (DSP Filters)</strong></td>
+                    <td>Biquad High-pass & Anti-aliasing LPF</td>
+                    <td><code>HPF: 85Hz • LPF: 7.5kHz</code></td>
+                    <td><span class="badge-status-ok">Hoạt động</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Voice Activity Detection (VAD)</strong></td>
+                    <td>Silero VAD ONNX Stateful RNN</td>
+                    <td><code>Threshold: 0.50 • Silence: 700ms</code></td>
+                    <td><span class="badge-status-ok">Hoạt động</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Ngắt lời tức thì (Barge-in)</strong></td>
+                    <td>Tích lũy giọng nói & Adaptive Threshold</td>
+                    <td><code>240ms Speech • Threshold: 0.55</code></td>
+                    <td><span class="badge-status-ok">Sẵn sàng</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Phân đoạn câu gối đầu (TTS)</strong></td>
+                    <td>Sentence Regex & Fast Streaming Chunks</td>
+                    <td><code>TTFA &lt; 800ms • MP3 Chunks</code></td>
+                    <td><span class="badge-status-ok">Hoạt động</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- TAB 4: SYSTEM SETTINGS                                             -->
+        <!-- ================================================================== -->
+        <section id="paneSettings" class="tab-pane">
+          <div class="subpage-container card-surface">
+            <div class="subpage-header">
+              <div>
+                <h2>⚙️ Cài đặt Giọng nói & Hệ thống</h2>
+                <p class="subpage-desc">Tùy chỉnh nhân vật trợ lý AI, tốc độ đọc và các tham số âm học</p>
+              </div>
+              <button id="saveMainSettingsBtn" class="btn-primary-action">Lưu thiết lập</button>
+            </div>
+
+            <div class="settings-content-grid">
+              <!-- Voice Persona Selection Cards -->
+              <div class="settings-card-group">
+                <label class="section-label">Giọng đọc Trợ lý (Voice Persona)</label>
+                <div class="voice-cards-grid">
+                  <div class="voice-card active" data-voice="vi-VN-HoaiMyNeural">
+                    <div class="voice-card-avatar female-avatar">👩</div>
+                    <div class="voice-card-info">
+                      <div class="voice-name">Ngọc Trinh <span class="voice-tag">Nữ</span></div>
+                      <div class="voice-desc">Truyền cảm, ấm áp, chuẩn giọng Hà Nội</div>
+                    </div>
+                    <div class="voice-check-badge">✓</div>
+                  </div>
+
+                  <div class="voice-card" data-voice="vi-VN-NamMinhNeural">
+                    <div class="voice-card-avatar male-avatar">👨</div>
+                    <div class="voice-card-info">
+                      <div class="voice-name">Nguyễn Đạt <span class="voice-tag">Nam</span></div>
+                      <div class="voice-desc">Chững chạc, tự nhiên, chuẩn giọng Hà Nội</div>
+                    </div>
+                    <div class="voice-check-badge">✓</div>
+                  </div>
+                </div>
+
+                <!-- Hidden native select for JS sync -->
+                <select id="ttsVoiceSelect" class="hidden-select">
+                  <option value="vi-VN-HoaiMyNeural" selected>Ngọc Trinh (Nữ)</option>
+                  <option value="vi-VN-NamMinhNeural">Nguyễn Đạt (Nam)</option>
+                </select>
+              </div>
+
+              <!-- Speed Rate Selection -->
+              <div class="settings-card-group">
+                <label class="section-label">Tốc độ phát âm (Speed Rate)</label>
+                <div class="speed-pills-row">
+                  <button type="button" class="speed-pill" data-rate="-20%">Chậm (0.8x)</button>
+                  <button type="button" class="speed-pill" data-rate="+0%">Bình thường (1.0x)</button>
+                  <button type="button" class="speed-pill active" data-rate="+15%">Nhanh (1.15x) ⭐</button>
+                  <button type="button" class="speed-pill" data-rate="+30%">Rất nhanh (1.3x)</button>
+                </div>
+                <select id="ttsRateSelect" class="hidden-select">
+                  <option value="-20%">0.8x</option>
+                  <option value="+0%">1.0x</option>
+                  <option value="+15%" selected>1.15x</option>
+                  <option value="+30%">1.3x</option>
+                </select>
+              </div>
+
+              <!-- Environment Presets -->
+              <div class="settings-card-group">
+                <label class="section-label">Môi trường sử dụng (Lọc tạp âm)</label>
+                <div class="env-presets-grid">
+                  <div class="env-card active" data-preset="quiet" data-silence="600" data-threshold="0.45">
+                    <div class="env-icon">🏠</div>
+                    <div class="env-content">
+                      <div class="env-title">Phòng yên tĩnh</div>
+                      <div class="env-desc">Nhận diện nhạy bén, tốc độ phản hồi nhanh nhất</div>
+                    </div>
+                  </div>
+
+                  <div class="env-card" data-preset="noisy" data-silence="700" data-threshold="0.60">
+                    <div class="env-icon">☕</div>
+                    <div class="env-content">
+                      <div class="env-title">Nhiều tạp âm / Quán cà phê</div>
+                      <div class="env-desc">Tăng cường lọc tiếng ồn xung quanh, chống kích hoạt nhầm</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Server & Network Parameters -->
+              <div class="settings-card-group">
+                <label class="section-label">Tham số Kết nối Máy chủ</label>
+                <div class="form-field-row">
+                  <div class="form-field">
+                    <label for="wsUrlInput">WebSocket Endpoint</label>
+                    <input type="text" id="wsUrlInput" class="form-text-input" />
+                  </div>
+                  <div class="form-field">
+                    <label for="sessionIdInput">Mã phiên (Session ID)</label>
+                    <input type="text" id="sessionIdInput" class="form-text-input" />
+                  </div>
+                </div>
+
+                <div class="form-field-row">
+                  <div class="form-field">
+                    <label for="vadSensitivity">Khoảng lặng ngắt câu (ms)</label>
+                    <input type="number" id="vadSensitivity" class="form-text-input" value="700" step="50" min="400" max="1500" />
+                  </div>
+                  <div class="form-field">
+                    <label for="vadThreshold">Ngưỡng nhạy VAD (0.30 - 0.80)</label>
+                    <input type="number" id="vadThreshold" class="form-text-input" value="0.50" step="0.05" min="0.30" max="0.80" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- TAB 5: DOCUMENTATION & SYSTEM ARCHITECTURE                         -->
+        <!-- ================================================================== -->
+        <section id="paneDocs" class="tab-pane">
+          <div class="subpage-container card-surface">
+            <div class="subpage-header">
+              <div>
+                <h2>📖 Kiến trúc Hệ thống & Tài liệu Kỹ thuật</h2>
+                <p class="subpage-desc">Mô tả luồng dữ liệu song công (Full-Duplex) và giao thức WebSocket</p>
+              </div>
+            </div>
+
+            <div class="docs-body">
+              <div class="docs-section">
+                <h3>1. Tổng quan Kiến trúc Song công (Full-Duplex)</h3>
+                <p>Khác với các hệ thống voicebot bộ đàm đơn công (Half-Duplex), Voicebot AI duy trì một kết nối WebSocket song công duy nhất <code>/ws/audio</code> giữa Trình duyệt và FastAPI Gateway. Mic luôn gửi liên tục các mảng mẫu PCM 16kHz, cho phép người dùng ngắt lời bot bất cứ lúc nào.</p>
+              </div>
+
+              <div class="docs-flow-card">
+                <div class="flow-step">
+                  <div class="step-num">1</div>
+                  <div class="step-desc"><strong>Client Mic (DSP):</strong> Lọc HPF 85Hz, hạ mẫu 16kHz Int16 truyền qua WebSocket.</div>
+                </div>
+                <div class="flow-arrow">➔</div>
+                <div class="flow-step">
+                  <div class="step-num">2</div>
+                  <div class="step-desc"><strong>Silero VAD (ONNX):</strong> Xác định tiếng nói, ngắt câu khi im lặng &ge; 700ms.</div>
+                </div>
+                <div class="flow-arrow">➔</div>
+                <div class="flow-step">
+                  <div class="step-num">3</div>
+                  <div class="step-desc"><strong>STT (PhoWhisper):</strong> Chuyển giọng nói tiếng Việt thành văn bản.</div>
+                </div>
+                <div class="flow-arrow">➔</div>
+                <div class="flow-step">
+                  <div class="step-num">4</div>
+                  <div class="step-desc"><strong>n8n / LLM:</strong> Suy luận câu trả lời qua Webhook AI Workflow.</div>
+                </div>
+                <div class="flow-arrow">➔</div>
+                <div class="flow-step">
+                  <div class="step-num">5</div>
+                  <div class="step-desc"><strong>Edge-TTS:</strong> Tách câu và stream âm thanh gối đầu (&lt; 800ms TTFA).</div>
+                </div>
+              </div>
+
+              <div class="docs-section">
+                <h3>2. Phím tắt Thao tác Nhanh</h3>
+                <div class="shortcuts-table-wrap">
+                  <table class="specs-table">
+                    <thead>
+                      <tr>
+                        <th>Phím tắt</th>
+                        <th>Hành động</th>
+                        <th>Tác dụng</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><kbd>Space</kbd> (Giữ phím)</td>
+                        <td>Push-to-Talk</td>
+                        <td>Giữ để nói, nhả ra để bot phản hồi ngay (bỏ qua 700ms khoảng lặng).</td>
+                      </tr>
+                      <tr>
+                        <td><kbd>Esc</kbd></td>
+                        <td>Ngắt lời (Barge-in)</td>
+                        <td>Tắt tiếng bot ngay lập tức và hủy tác vụ sinh âm thanh trên máy chủ.</td>
+                      </tr>
+                      <tr>
+                        <td><kbd>Enter</kbd></td>
+                        <td>Gửi tin nhắn</td>
+                        <td>Gửi câu hỏi từ khung nhập văn bản phía dưới.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
 
+  <!-- ====================================================================== -->
+  <!-- MODAL: LOGIN / AUTHENTICATION (FROSTED GLASS MODERN DESIGN)            -->
+  <!-- ====================================================================== -->
+  <div id="loginModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+    <div class="modal-dialog login-dialog card-surface">
+      <div class="modal-dialog-header">
+        <div class="login-header-brand">
+          <div class="login-brand-icon">✨</div>
+          <div>
+            <h3 id="loginModalTitle">Đăng nhập Voicebot AI</h3>
+            <p class="modal-subtitle">Truy cập toàn bộ tính năng đàm thoại thời gian thực</p>
+          </div>
+        </div>
+        <button id="closeLoginModalBtn" class="btn-close-modal" aria-label="Đóng">&times;</button>
+      </div>
+
+      <div class="modal-dialog-body">
+        <form id="authLoginForm" onsubmit="return false;">
+          <div class="form-field">
+            <label for="loginUsernameInput">Tên đăng nhập hoặc Email</label>
+            <input type="text" id="loginUsernameInput" class="form-text-input" placeholder="Ví dụ: admin hoặc tên của bạn" required autocomplete="username" />
+          </div>
+
+          <div class="form-field">
+            <label for="loginPasswordInput">Mật khẩu</label>
+            <div class="password-input-wrap">
+              <input type="password" id="loginPasswordInput" class="form-text-input" placeholder="Nhập mật khẩu..." required autocomplete="current-password" />
+              <button type="button" id="togglePasswordVisibilityBtn" class="btn-toggle-eye">👁️</button>
+            </div>
+          </div>
+
+          <div class="login-options-row">
+            <label class="remember-label">
+              <input type="checkbox" id="rememberMeCheck" checked />
+              <span>Ghi nhớ đăng nhập</span>
+            </label>
+            <span class="demo-hint-text">Mặc định: admin / 123</span>
+          </div>
+
+          <div class="login-actions-group">
+            <button type="submit" id="submitLoginBtn" class="btn-primary-action btn-block">Đăng nhập</button>
+            <button type="button" id="quickDemoLoginBtn" class="btn-secondary-action btn-block btn-demo-quick">
+              ⚡ Đăng nhập nhanh (Tài khoản Demo Admin)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- JavaScript Application Entry -->
   <script src="/static/app.js"></script>
 </body>
 </html>

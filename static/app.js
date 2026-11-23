@@ -81,6 +81,9 @@ class VoicebotClient {
     this.loadChatHistory();
     this.initEventListeners();
     this.initVisualizer();
+    this.initAuth();
+    this.initTabNavigation();
+    this.initSubpageActions();
   }
 
   getAssistantName() {
@@ -714,15 +717,15 @@ class VoicebotClient {
   updateLatencyMetrics(data) {
     if (this.sttMetricVal && data.stt_ms !== undefined) {
       this.sttMetricVal.innerText = `${data.stt_ms}ms`;
-      this.sttMetricVal.className = "metric-value " + (data.stt_ms < 400 ? "metric-fast" : data.stt_ms < 1000 ? "metric-normal" : "metric-slow");
+      this.sttMetricVal.className = "metric-num " + (data.stt_ms < 400 ? "highlight-text" : "");
     }
     if (this.llmMetricVal && data.llm_ms !== undefined) {
       this.llmMetricVal.innerText = `${data.llm_ms}ms`;
-      this.llmMetricVal.className = "metric-value " + (data.llm_ms < 800 ? "metric-fast" : data.llm_ms < 2000 ? "metric-normal" : "metric-slow");
+      this.llmMetricVal.className = "metric-num " + (data.llm_ms < 800 ? "highlight-text" : "");
     }
     if (this.ttsMetricVal && data.tts_ms !== undefined) {
       this.ttsMetricVal.innerText = `${data.tts_ms}ms`;
-      this.ttsMetricVal.className = "metric-value " + (data.tts_ms < 400 ? "metric-fast" : data.tts_ms < 800 ? "metric-normal" : "metric-slow");
+      this.ttsMetricVal.className = "metric-num " + (data.tts_ms < 400 ? "highlight-text" : "");
     }
     if (data.total_ms !== undefined) {
       const sec = (data.total_ms / 1000).toFixed(2);
@@ -731,9 +734,18 @@ class VoicebotClient {
       }
       if (this.totalMetricDetailVal) {
         this.totalMetricDetailVal.innerText = `${data.total_ms}ms`;
-        this.totalMetricDetailVal.className = "metric-value " + (data.total_ms < 1500 ? "metric-fast" : data.total_ms < 3000 ? "metric-normal" : "metric-slow");
       }
     }
+
+    // Sync to Analytics Tab KPI cards
+    const kpiStt = document.getElementById("kpiSttVal");
+    const kpiLlm = document.getElementById("kpiLlmVal");
+    const kpiTts = document.getElementById("kpiTtsVal");
+    const kpiTotal = document.getElementById("kpiTotalVal");
+    if (kpiStt && data.stt_ms !== undefined) kpiStt.innerText = `${data.stt_ms} ms`;
+    if (kpiLlm && data.llm_ms !== undefined) kpiLlm.innerText = `${data.llm_ms} ms`;
+    if (kpiTts && data.tts_ms !== undefined) kpiTts.innerText = `${data.tts_ms} ms`;
+    if (kpiTotal && data.total_ms !== undefined) kpiTotal.innerText = `${data.total_ms} ms`;
   }
 
   handleSentenceEnd(sentenceIndex) {
@@ -930,6 +942,9 @@ class VoicebotClient {
       try {
         localStorage.setItem("voicebot_chat_history", JSON.stringify(this.chatHistory));
       } catch (e) {}
+
+      const countBadge = document.getElementById("historyCountBadge");
+      if (countBadge) countBadge.innerText = this.chatHistory.length;
     }
   }
 
@@ -939,6 +954,12 @@ class VoicebotClient {
       try {
         localStorage.removeItem("voicebot_chat_history");
       } catch (e) {}
+
+      const countBadge = document.getElementById("historyCountBadge");
+      if (countBadge) countBadge.innerText = "0";
+
+      const historyContainer = document.getElementById("historySessionList");
+      if (historyContainer) this.renderHistoryList();
       this.chatContainer.innerHTML = `
         <div class="system-welcome-card">
           <div class="welcome-icon">💬</div>
@@ -1082,6 +1103,352 @@ class VoicebotClient {
     };
 
     draw();
+  }
+
+  /* ==============================================================================
+     SAAS STUDIO EXTENSIONS: TABS, AUTH & SUBPAGE ACTIONS
+     ============================================================================== */
+
+  initTabNavigation() {
+    const navItems = document.querySelectorAll(".sidebar-nav .nav-item");
+    const panes = document.querySelectorAll(".tab-pane");
+    const topbarTitle = document.getElementById("topbarTabTitle");
+
+    const tabTitles = {
+      voicebot: "🎙️ Đàm thoại trực tiếp",
+      history: "💬 Lịch sử các phiên đối thoại",
+      analytics: "📊 Phân tích Âm học & Đo lường Độ trễ",
+      settings: "⚙️ Cài đặt Giọng nói & Hệ thống",
+      docs: "📖 Kiến trúc Hệ thống & Tài liệu Kỹ thuật",
+    };
+
+    navItems.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetTab = btn.dataset.tab;
+        if (!targetTab) return;
+
+        // Active state on nav buttons
+        navItems.forEach((item) => item.classList.remove("active"));
+        btn.classList.add("active");
+
+        // Active state on panes
+        panes.forEach((pane) => pane.classList.remove("active"));
+        const targetPane = document.getElementById(`pane${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`);
+        if (targetPane) {
+          targetPane.classList.add("active");
+        }
+
+        // Update Topbar Title
+        if (topbarTitle && tabTitles[targetTab]) {
+          topbarTitle.innerText = tabTitles[targetTab];
+        }
+
+        // Tab-specific handlers
+        if (targetTab === "history") {
+          this.renderHistoryList();
+        } else if (targetTab === "voicebot") {
+          this.resizeCanvas();
+        }
+
+        // Mobile sidebar close
+        const sidebar = document.getElementById("appSidebar");
+        if (sidebar && window.innerWidth <= 1024) {
+          sidebar.classList.remove("open");
+        }
+      });
+    });
+
+    // Mobile sidebar toggle
+    const toggleBtn = document.getElementById("sidebarToggleBtn");
+    const sidebar = document.getElementById("appSidebar");
+    if (toggleBtn && sidebar) {
+      toggleBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+      });
+    }
+  }
+
+  initAuth() {
+    this.token = localStorage.getItem("voicebot_token") || null;
+    const savedUser = localStorage.getItem("voicebot_user");
+    this.currentUser = savedUser ? JSON.parse(savedUser) : {
+      username: "admin",
+      name: "Nguyễn Văn Đạt",
+      role: "Kỹ sư AI / Admin",
+      avatar: "👨‍💻",
+    };
+
+    // If no token exists on first load, initialize as logged in with admin demo
+    if (!this.token) {
+      this.token = "token_demo_admin";
+      localStorage.setItem("voicebot_token", this.token);
+      localStorage.setItem("voicebot_user", JSON.stringify(this.currentUser));
+    }
+
+    this.renderUserWidget();
+
+    // DOM Elements for Login Modal
+    const loginModal = document.getElementById("loginModal");
+    const closeLoginBtn = document.getElementById("closeLoginModalBtn");
+    const authForm = document.getElementById("authLoginForm");
+    const usernameInput = document.getElementById("loginUsernameInput");
+    const passwordInput = document.getElementById("loginPasswordInput");
+    const toggleEyeBtn = document.getElementById("togglePasswordVisibilityBtn");
+    const quickDemoBtn = document.getElementById("quickDemoLoginBtn");
+    const logoutBtn = document.getElementById("sidebarLogoutBtn");
+    const loginTriggerBtn = document.getElementById("sidebarLoginTriggerBtn");
+    const topbarUserChip = document.getElementById("topbarUserChip");
+
+    if (closeLoginBtn && loginModal) {
+      closeLoginBtn.addEventListener("click", () => loginModal.classList.add("hidden"));
+    }
+
+    if (loginTriggerBtn && loginModal) {
+      loginTriggerBtn.addEventListener("click", () => loginModal.classList.remove("hidden"));
+    }
+
+    if (topbarUserChip && loginModal) {
+      topbarUserChip.addEventListener("click", () => {
+        if (!this.token) {
+          loginModal.classList.remove("hidden");
+        } else {
+          this.showToast(`Tài khoản: ${this.currentUser.name} (${this.currentUser.role})`, "info");
+        }
+      });
+    }
+
+    if (toggleEyeBtn && passwordInput) {
+      toggleEyeBtn.addEventListener("click", () => {
+        const isPass = passwordInput.type === "password";
+        passwordInput.type = isPass ? "text" : "password";
+        toggleEyeBtn.innerText = isPass ? "🙈" : "👁️";
+      });
+    }
+
+    // Submit Login
+    const handleLogin = async (username, password) => {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          this.token = data.token;
+          this.currentUser = data.user;
+          localStorage.setItem("voicebot_token", this.token);
+          localStorage.setItem("voicebot_user", JSON.stringify(this.currentUser));
+          this.renderUserWidget();
+          if (loginModal) loginModal.classList.add("hidden");
+          this.showToast(data.message || `Đăng nhập thành công! Chào ${this.currentUser.name}`, "success");
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          this.showToast(errData.detail || "Đăng nhập thất bại. Kiểm tra lại thông tin!", "warning");
+        }
+      } catch (err) {
+        // Fallback local login for standalone usage
+        this.token = "token_offline";
+        this.currentUser = {
+          username: username,
+          name: username.charAt(0).toUpperCase() + username.slice(1),
+          role: "Thành viên Voicebot",
+          avatar: "🧑‍🚀",
+        };
+        localStorage.setItem("voicebot_token", this.token);
+        localStorage.setItem("voicebot_user", JSON.stringify(this.currentUser));
+        this.renderUserWidget();
+        if (loginModal) loginModal.classList.add("hidden");
+        this.showToast(`Đăng nhập thành công: ${this.currentUser.name}`, "success");
+      }
+    };
+
+    if (authForm) {
+      authForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const u = usernameInput ? usernameInput.value.trim() : "";
+        const p = passwordInput ? passwordInput.value.trim() : "";
+        if (!u || !p) {
+          this.showToast("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu", "warning");
+          return;
+        }
+        handleLogin(u, p);
+      });
+    }
+
+    if (quickDemoBtn) {
+      quickDemoBtn.addEventListener("click", () => {
+        if (usernameInput) usernameInput.value = "admin";
+        if (passwordInput) passwordInput.value = "123";
+        handleLogin("admin", "123");
+      });
+    }
+
+    // Logout Action
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          if (this.token) {
+            await fetch("/api/auth/logout", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${this.token}` },
+            }).catch(() => {});
+          }
+        } catch (_) {}
+
+        this.token = null;
+        localStorage.removeItem("voicebot_token");
+        localStorage.removeItem("voicebot_user");
+
+        if (this.isRecording) {
+          this.stopConversation();
+        }
+
+        this.renderUserWidget();
+        if (loginModal) loginModal.classList.remove("hidden");
+        this.showToast("Đã đăng xuất tài khoản an toàn.", "info");
+      });
+    }
+  }
+
+  renderUserWidget() {
+    const profileBox = document.getElementById("sidebarUserProfile");
+    const promptBox = document.getElementById("sidebarLoginPrompt");
+    const sidebarAvatar = document.getElementById("sidebarUserAvatar");
+    const sidebarName = document.getElementById("sidebarUserName");
+    const sidebarRole = document.getElementById("sidebarUserRole");
+    const topbarAvatar = document.getElementById("topbarUserAvatar");
+    const topbarName = document.getElementById("topbarUserName");
+
+    if (this.token && this.currentUser) {
+      if (profileBox) profileBox.classList.remove("hidden");
+      if (promptBox) promptBox.classList.add("hidden");
+
+      if (sidebarAvatar) sidebarAvatar.innerText = this.currentUser.avatar || "👨‍💻";
+      if (sidebarName) sidebarName.innerText = this.currentUser.name || "Nguyễn Văn Đạt";
+      if (sidebarRole) sidebarRole.innerText = this.currentUser.role || "Kỹ sư AI / Admin";
+
+      if (topbarAvatar) topbarAvatar.innerText = this.currentUser.avatar || "👨‍💻";
+      if (topbarName) topbarName.innerText = this.currentUser.name || "Nguyễn Văn Đạt";
+    } else {
+      if (profileBox) profileBox.classList.add("hidden");
+      if (promptBox) promptBox.classList.remove("hidden");
+
+      if (topbarAvatar) topbarAvatar.innerText = "🔒";
+      if (topbarName) topbarName.innerText = "Chưa đăng nhập";
+    }
+  }
+
+  renderHistoryList() {
+    const container = document.getElementById("historySessionList");
+    const countBadge = document.getElementById("historyCountBadge");
+    if (!container) return;
+
+    if (countBadge) {
+      countBadge.innerText = this.chatHistory.length;
+    }
+
+    if (!this.chatHistory || this.chatHistory.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">💬</div>
+          <p style="font-size: 0.9rem;">Chưa có tin nhắn nào trong phiên đối thoại hiện tại.</p>
+          <small>Bấm vào tab 🎙️ Đàm thoại để bắt đầu nói chuyện với trợ lý!</small>
+        </div>
+      `;
+      return;
+    }
+
+    const searchInput = document.getElementById("historySearchInput");
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+    const filtered = this.chatHistory.filter((item) => {
+      if (!query) return true;
+      return (item.text && item.text.toLowerCase().includes(query)) ||
+             (item.senderName && item.senderName.toLowerCase().includes(query));
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p style="text-align: center; color: var(--text-tertiary); padding: 20px;">Không tìm thấy tin nhắn khớp với từ khóa "${query}".</p>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((item, idx) => `
+      <div class="history-session-card">
+        <div class="session-info-left">
+          <div class="session-title">
+            <span>${item.role === "user" ? "👤 Bạn" : "🤖 Trợ lý AI"}</span>: "${item.text.length > 80 ? item.text.substring(0, 80) + '...' : item.text}"
+          </div>
+          <div class="session-meta-row">
+            <span>⏱️ ${item.timestamp || 'Vừa xong'}</span>
+            <span>•</span>
+            <span>Vai trò: ${item.role}</span>
+          </div>
+        </div>
+        <div>
+          <button class="btn-tool-pill" onclick="window.voicebot.jumpToChat('${item.id || idx}')">Xem</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  jumpToChat(id) {
+    const voicebotNavBtn = document.querySelector('.sidebar-nav .nav-item[data-tab="voicebot"]');
+    if (voicebotNavBtn) {
+      voicebotNavBtn.click();
+    }
+  }
+
+  initSubpageActions() {
+    // Search input filter in History tab
+    const searchInput = document.getElementById("historySearchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", () => this.renderHistoryList());
+    }
+
+    // Refresh history
+    const refreshBtn = document.getElementById("historyRefreshBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => {
+        this.renderHistoryList();
+        this.showToast("Đã làm mới danh sách hội thoại!", "info");
+      });
+    }
+
+    // Clear all history
+    const clearAllBtn = document.getElementById("historyClearAllBtn");
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener("click", () => this.clearChat());
+    }
+
+    // Save main settings button
+    const saveMainBtn = document.getElementById("saveMainSettingsBtn");
+    if (saveMainBtn) {
+      saveMainBtn.addEventListener("click", () => {
+        if (this.saveSettingsBtn) {
+          this.saveSettingsBtn.click();
+        } else {
+          this.showToast("Đã lưu thiết lập thành công!", "success");
+        }
+      });
+    }
+
+    // Reset analytics
+    const resetAnalyticsBtn = document.getElementById("analyticsResetBtn");
+    if (resetAnalyticsBtn) {
+      resetAnalyticsBtn.addEventListener("click", () => {
+        const kpiStt = document.getElementById("kpiSttVal");
+        const kpiLlm = document.getElementById("kpiLlmVal");
+        const kpiTts = document.getElementById("kpiTtsVal");
+        const kpiTotal = document.getElementById("kpiTotalVal");
+        if (kpiStt) kpiStt.innerText = "-- ms";
+        if (kpiLlm) kpiLlm.innerText = "-- ms";
+        if (kpiTts) kpiTts.innerText = "-- ms";
+        if (kpiTotal) kpiTotal.innerText = "-- ms";
+        this.showToast("Đã làm mới bộ đo lường âm học!", "info");
+      });
+    }
   }
 }
 

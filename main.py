@@ -21,8 +21,9 @@ except Exception:
     pass
 
 
+from pydantic import BaseModel
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -114,6 +115,129 @@ async def health_check():
         "tts_voice": tts_engine.voice if tts_engine else None,
         "n8n_webhook": n8n_client.webhook_url if n8n_client else None,
     }
+
+
+# ==============================================================================
+# AUTHENTICATION & USER MANAGEMENT API
+# ==============================================================================
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    name: str
+
+USERS_DB = {
+    "admin": {
+        "username": "admin",
+        "password": "123",  # Mật khẩu demo mặc định
+        "name": "Nguyễn Văn Đạt",
+        "email": "dat.nguyen@voicebot.ai",
+        "role": "Kỹ sư Trí tuệ Nhân tạo (Admin)",
+        "avatar": "👨‍💻",
+    },
+    "guest": {
+        "username": "guest",
+        "password": "123",
+        "name": "Khách thử nghiệm",
+        "email": "guest@voicebot.ai",
+        "role": "Thành viên trải nghiệm",
+        "avatar": "👤",
+    }
+}
+ACTIVE_SESSIONS = {}
+
+@app.post("/api/auth/login")
+async def auth_login(req: LoginRequest):
+    """Xác thực đăng nhập và cấp token phiên."""
+    uname = req.username.strip().lower()
+    user = USERS_DB.get(uname)
+    if not user or user["password"] != req.password.strip():
+        # Cho phép bất kỳ username nào với password bất kỳ để tiện demo linh hoạt nếu chưa tồn tại
+        if uname and len(uname) >= 3 and len(req.password.strip()) >= 3:
+            user = {
+                "username": uname,
+                "password": req.password.strip(),
+                "name": req.username.capitalize(),
+                "email": f"{uname}@voicebot.ai",
+                "role": "Thành viên Voicebot",
+                "avatar": "🧑‍🚀",
+            }
+            USERS_DB[uname] = user
+        else:
+            raise HTTPException(status_code=401, detail="Tên đăng nhập hoặc mật khẩu không chính xác (Tối thiểu 3 ký tự).")
+
+    token = f"token_{uuid.uuid4().hex}"
+    user_info = {
+        "username": user["username"],
+        "name": user["name"],
+        "email": user["email"],
+        "role": user["role"],
+        "avatar": user["avatar"],
+    }
+    ACTIVE_SESSIONS[token] = user_info
+    return {
+        "success": True,
+        "token": token,
+        "user": user_info,
+        "message": f"Chào mừng {user['name']} quay trở lại!",
+    }
+
+@app.post("/api/auth/register")
+async def auth_register(req: RegisterRequest):
+    """Đăng ký tài khoản người dùng mới."""
+    uname = req.username.strip().lower()
+    if not uname or len(uname) < 3:
+        raise HTTPException(status_code=400, detail="Tên đăng nhập phải có ít nhất 3 ký tự.")
+    if uname in USERS_DB:
+        raise HTTPException(status_code=400, detail="Tên đăng nhập đã tồn tại trên hệ thống.")
+
+    user = {
+        "username": uname,
+        "password": req.password.strip(),
+        "name": req.name.strip() or uname.capitalize(),
+        "email": f"{uname}@voicebot.ai",
+        "role": "Thành viên mới",
+        "avatar": "🌟",
+    }
+    USERS_DB[uname] = user
+
+    token = f"token_{uuid.uuid4().hex}"
+    user_info = {
+        "username": user["username"],
+        "name": user["name"],
+        "email": user["email"],
+        "role": user["role"],
+        "avatar": user["avatar"],
+    }
+    ACTIVE_SESSIONS[token] = user_info
+    return {
+        "success": True,
+        "token": token,
+        "user": user_info,
+        "message": f"Đăng ký tài khoản thành công!",
+    }
+
+@app.get("/api/auth/me")
+async def auth_me(authorization: Optional[str] = Header(None)):
+    """Lấy thông tin người dùng hiện tại từ token."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Chưa đăng nhập hoặc thiếu token.")
+    token = authorization.replace("Bearer ", "").strip()
+    user = ACTIVE_SESSIONS.get(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Phiên đăng nhập đã hết hạn.")
+    return {"success": True, "user": user}
+
+@app.post("/api/auth/logout")
+async def auth_logout(authorization: Optional[str] = Header(None)):
+    """Hủy token phiên đăng xuất."""
+    if authorization:
+        token = authorization.replace("Bearer ", "").strip()
+        ACTIVE_SESSIONS.pop(token, None)
+    return {"success": True, "message": "Đã đăng xuất thành công."}
 
 @app.websocket("/ws/audio")
 async def websocket_audio_endpoint(websocket: WebSocket):
