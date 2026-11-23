@@ -16,5 +16,7 @@ services:
     volumes:
       # Tái sử dụng cache mô hình đã tải trên máy tính để khởi động ngay lập tức
       - "${USERPROFILE}/.cache/huggingface:/root/.cache/huggingface"
+      - "./static:/app/static"
+      - "./main.py:/app/main.py"
     extra_hosts:
       - "host.docker.internal:host-gateway"
